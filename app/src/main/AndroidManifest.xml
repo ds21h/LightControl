@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="jb.light.control">
+
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/lamp"
+        android:label="@string/app_name"
+        android:theme="@android:style/Theme.Holo.Light"
+        tools:ignore="GoogleAppIndexingWarning">
+
+        <!-- android:theme="@style/AppTheme" > -->
+        <activity
+            android:name="jb.light.control.LightControl"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="jb.light.control.ManageSwitches"
+            android:label="@string/title_manage_switches" />
+        <activity
+            android:name="jb.light.control.ModifySwitch"
+            android:label="@string/title_modify_switch" />
+        <activity
+            android:name="jb.light.control.ManageServers"
+            android:label="@string/title_manage_servers" />
+        <activity
+            android:name="jb.light.control.ModifyServer"
+            android:label="@string/title_modify_server" />
+        <activity
+            android:name="jb.light.control.ManageSettings"
+            android:label="@string/title_manage_settings" />
+        <activity
+            android:name="jb.light.control.SelectServer"
+            android:label="SelectServer"
+            android:theme="@android:style/Theme.Holo.Light.Dialog.NoActionBar" />
+        <activity android:name="jb.light.control.ModifyLocation" />
+        <activity android:name="jb.light.control.ModifySensor" />
+        <activity android:name="jb.light.control.ModifyLightOff" />
+    </application>
+
+</manifest>

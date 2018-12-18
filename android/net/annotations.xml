@@ -1,0 +1,5 @@
+<root>
+  <item name='android.net.ConnectivityManager android.net.NetworkInfo getNetworkInfo(int)'>
+    <annotation name='java.lang.annotation.Deprecated' />
+  </item>
+</root>

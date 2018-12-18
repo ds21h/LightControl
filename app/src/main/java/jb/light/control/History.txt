@@ -1,0 +1,25 @@
+Versie 1.0 - 01-11-2015
+    -   Eerste stabiele versie
+Versie 2.0 - 08-10-2017
+    -   Ondersteuning ESP8266 Schakelaars
+    -   Lokale DB met schakelaarinfo zodat ESP8266 schakelaars ook zonder server geschakeld kunnen worden
+    -   Server definitie in lokale DB ipv XML file
+
+Versie 2.01 - 10-07-2018
+    -   ACCESS_COARSE_LOCATION toegevoegd. Is noodzakelijk voor Android 8.1 (Oreo) om SSID op te vragen.
+
+Version 2.9 - 03-12-2018
+    -   Translated into English (only program itself, database and communication still in dutch).
+    -   Communication with esp switch changed to English
+    -   URI Switch/Button abandoned. Now Switch/Setting is used
+    -   Classes Setting and Switch no longer in seperate package.
+    -   Requires ESP8266-Switch software version 2.1 or later.
+
+Version 3.0 - 16-12-2018
+    -   Switch to English server, so all URIs are in English.
+    -   Grouped all used URIs in one static class URIs. This makes it easier to find where which URI is used.
+    -   Upgraded to Android 6+ permissions model
+    -   Upgraded Settings communication to JSON
+    -   Translated db to English --> Not compatible, in first run for a server please re-enter server details.
+    -   Completely multi lingual. Now English and Dutch. Additional languages are easily added.
+    -   Requires LightAPI version 1.0 on server

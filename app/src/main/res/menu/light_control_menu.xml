@@ -1,0 +1,36 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" tools:context="jb.light.control.LightControl">
+    <item
+        android:id="@+id/action_refresh"
+        android:icon="@mipmap/ic_menu_refresh"
+        android:onClick="sRefresh"
+        android:showAsAction="always"
+        android:title="@string/title_refresh"
+        tools:ignore="AppCompatResource" />
+    <item android:id="@+id/action_more"
+        android:title="@string/title_more"
+        android:icon="@mipmap/ic_menu_moreoverflow_normal_holo_light"
+        android:showAsAction="always"
+        tools:ignore="AppCompatResource">
+        <menu>
+            <item android:id="@+id/action_settings"
+                android:title="@string/title_settings"
+                android:icon="@mipmap/ic_menu_settings_holo_light"
+                android:onClick="sManageSettings"
+                android:showAsAction="never"
+                tools:ignore="AppCompatResource"/>
+            <item android:id="@+id/action_servers"
+                android:title="@string/title_servers"
+                android:icon="@mipmap/server"
+                android:onClick="sManageServers"
+                android:showAsAction="never"
+                tools:ignore="AppCompatResource"/>
+            <item android:id="@+id/action_schakelaars"
+                android:title="@string/title_switches"
+                android:onClick="sManageSwitches"
+                android:icon="@mipmap/lamp"
+                android:showAsAction="never"
+                tools:ignore="AppCompatResource"/>
+        </menu>
+    </item>
+</menu>
