@@ -62,20 +62,32 @@ public class ModifyServer extends Activity implements YesNoDialog.YesNoDialogLis
 
         if (savedInstanceState == null) {
             lInt = getIntent();
-            mAction = lInt.getAction();
-            if (mAction.equals(Intent.ACTION_EDIT)){
-                lUri = lInt.getData();
-                mServerId = lUri.getLastPathSegment();
-                mChangeName = false;
-                mTitle = getString(R.string.title_modify_server);
-            } else {
-                mServerId = "";
-                mChangeName = true;
-                mTitle = getString(R.string.title_newserver);
-            }
-            lResult = sInitVar();
-            if (lResult!=0){
+            if (lInt == null){
                 sShutDown();
+            } else {
+                mAction = lInt.getAction();
+                if (mAction == null){
+                    sShutDown();
+                } else {
+                    if (mAction.equals(Intent.ACTION_EDIT)){
+                        lUri = lInt.getData();
+                        if (lUri == null){
+                            sShutDown();
+                        } else {
+                            mServerId = lUri.getLastPathSegment();
+                            mChangeName = false;
+                            mTitle = getString(R.string.title_modify_server);
+                        }
+                    } else {
+                        mServerId = "";
+                        mChangeName = true;
+                        mTitle = getString(R.string.title_newserver);
+                    }
+                    lResult = sInitVar();
+                    if (lResult!=0){
+                        sShutDown();
+                    }
+                }
             }
         } else {
             mAction = savedInstanceState.getString(cAction);
@@ -88,11 +100,11 @@ public class ModifyServer extends Activity implements YesNoDialog.YesNoDialogLis
             mManager = savedInstanceState.getBoolean(cManager);
         }
 
-        mEdtServerName = (EditText)findViewById(R.id.edtServerName);
-        mEdtNetwork = (EditText)findViewById(R.id.edtNetwork);
-        mEdtIP = (EditText)findViewById(R.id.edtIPaddress);
-        mEdtPort = (EditText) findViewById(R.id.edtPort);
-        mChkManager = (CheckBox)findViewById(R.id.chkManager);
+        mEdtServerName = findViewById(R.id.edtServerName);
+        mEdtNetwork = findViewById(R.id.edtNetwork);
+        mEdtIP = findViewById(R.id.edtIPaddress);
+        mEdtPort = findViewById(R.id.edtPort);
+        mChkManager = findViewById(R.id.chkManager);
 
         mEdtServerName.setEnabled(mChangeName);
         setTitle(mTitle);
@@ -101,6 +113,7 @@ public class ModifyServer extends Activity implements YesNoDialog.YesNoDialogLis
     }
 
     public void onSaveInstanceState(@NonNull Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
         sReadScreen();
         savedInstanceState.putString(cAction, mAction);
         savedInstanceState.putBoolean(cChangeName, mChangeName);
@@ -114,12 +127,15 @@ public class ModifyServer extends Activity implements YesNoDialog.YesNoDialogLis
 
     @Override
     public boolean onCreateOptionsMenu(Menu pMenu) {
+        super.onCreateOptionsMenu(pMenu);
         getMenuInflater().inflate(R.menu.modify_menu, pMenu);
         return true;
     }
 
     @Override
     public boolean onPrepareOptionsMenu(Menu pMenu){
+        super.onPrepareOptionsMenu(pMenu);
+
         MenuItem lItem;
 
         lItem = pMenu.findItem(R.id.action_delete);
@@ -256,18 +272,26 @@ public class ModifyServer extends Activity implements YesNoDialog.YesNoDialogLis
         boolean lConnected;
 
         lConnect = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        lNet = lConnect.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-        lConnected = lNet.isConnected();
-        if (lConnected) {
-            lWifi =  (WifiManager)getApplicationContext().getSystemService(WIFI_SERVICE);
-            lInfo = lWifi.getConnectionInfo();
-            lSSId = lInfo.getSSID();
-            if (lSSId.startsWith("\"")) {
-                lSSId = lSSId.substring(1, lSSId.length() - 1);
-            }
-            mEdtNetwork.setText(lSSId);
-        } else {
+        if (lConnect == null){
             Toast.makeText(this, R.string.msg_nonetwork, Toast.LENGTH_SHORT).show();
+        } else {
+            lNet = lConnect.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+            lConnected = lNet.isConnected();
+            if (lConnected) {
+                lWifi =  (WifiManager)getApplicationContext().getSystemService(WIFI_SERVICE);
+                if (lWifi == null){
+                    Toast.makeText(this, R.string.msg_nonetwork, Toast.LENGTH_SHORT).show();
+                } else {
+                    lInfo = lWifi.getConnectionInfo();
+                    lSSId = lInfo.getSSID();
+                    if (lSSId.startsWith("\"")) {
+                        lSSId = lSSId.substring(1, lSSId.length() - 1);
+                    }
+                    mEdtNetwork.setText(lSSId);
+                }
+            } else {
+                Toast.makeText(this, R.string.msg_nonetwork, Toast.LENGTH_SHORT).show();
+            }
         }
     }
 

@@ -21,6 +21,7 @@ import android.widget.Toast;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.ref.WeakReference;
 import java.util.Locale;
 
 /**
@@ -132,7 +133,7 @@ public class ModifySwitch extends Activity {
                     lParButton = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0);
                 } else {
                     lChoice = (String)mAdpType.getItem(pPosition);
-                    if (lChoice.equals("esp")){
+                    if (lChoice != null && lChoice.equals("esp")){
                         lParGroup = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0);
                         lParPoint = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0);
                         lParIP = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -159,34 +160,42 @@ public class ModifySwitch extends Activity {
         if (savedInstanceState == null) {
             lInt = getIntent();
             lBundle = lInt.getExtras();
-            mServerName = lBundle.getString(cServerName);
-            mAction = lInt.getAction();
-            mServer = mData.xServer(mServerName);
-            mButton = false;
-            if (mAction.equals(Intent.ACTION_EDIT)){
-                lUri = lInt.getData();
-                mSwitchName = lUri.getLastPathSegment();
-                mChangeName = false;
-                mTitle = getString(R.string.title_modify_switch);
-                mSwitch = mData.xSwitch(mServer.xName(), mSwitchName);
-                if (mSwitch.xType().equals("esp")){
-                    new GetButton().execute();
-                }
+            if (lBundle == null){
+                finish();
             } else {
-                mSwitchName = "";
-                mSwitch = new Switch();
-                mChangeName = true;
-                mTitle = getString(R.string.title_new_switch);
+                mServerName = lBundle.getString(cServerName);
+                mAction = lInt.getAction();
+                mServer = mData.xServer(mServerName);
+                mButton = false;
+                if (mAction.equals(Intent.ACTION_EDIT)){
+                    lUri = lInt.getData();
+                    if (lUri == null){
+                        finish();
+                    } else {
+                        mSwitchName = lUri.getLastPathSegment();
+                        mChangeName = false;
+                        mTitle = getString(R.string.title_modify_switch);
+                        mSwitch = mData.xSwitch(mServer.xName(), mSwitchName);
+                        if (mSwitch.xType().equals("esp")){
+                            new GetButton(this).execute();
+                        }
+                    }
+                } else {
+                    mSwitchName = "";
+                    mSwitch = new Switch();
+                    mChangeName = true;
+                    mTitle = getString(R.string.title_new_switch);
+                }
+                mSwitchSeqNumber = String.valueOf(mSwitch.xSeqNumber());
+                mSwitchId = mSwitch.xName();
+                mSwitchType = mSwitch.xType();
+                mSwitchGroup = mSwitch.xGroup();
+                mSwitchPoint = mSwitch.xPoint();
+                mSwitchIP = mSwitch.xIP();
+                mSwitchPause = String.valueOf(mSwitch.xPause());
+                mButtonActive = false;
+                mSwitchActive = mSwitch.xActive();
             }
-            mSwitchSeqNumber = String.valueOf(mSwitch.xSeqNumber());
-            mSwitchId = mSwitch.xName();
-            mSwitchType = mSwitch.xType();
-            mSwitchGroup = mSwitch.xGroup();
-            mSwitchPoint = mSwitch.xPoint();
-            mSwitchIP = mSwitch.xIP();
-            mSwitchPause = String.valueOf(mSwitch.xPause());
-            mButtonActive = false;
-            mSwitchActive = mSwitch.xActive();
         } else {
             mTitle = savedInstanceState.getString(cTitle);
             mButton = savedInstanceState.getBoolean(cButton);
@@ -231,16 +240,22 @@ public class ModifySwitch extends Activity {
         savedInstanceState.putString(cSwitchPause, mSwitchPause);
         savedInstanceState.putBoolean(cButtonActive, mButtonActive);
         savedInstanceState.putBoolean(cSwitchActive, mSwitchActive);
+
+        super.onSaveInstanceState(savedInstanceState);
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu pMenu) {
+        super.onCreateOptionsMenu(pMenu);
+
         getMenuInflater().inflate(R.menu.modify_menu, pMenu);
         return true;
     }
 
     @Override
     public boolean onPrepareOptionsMenu(Menu pMenu){
+        super.onPrepareOptionsMenu(pMenu);
+
         MenuItem lItem;
 
         lItem = pMenu.findItem(R.id.action_delete);
@@ -264,7 +279,7 @@ public class ModifySwitch extends Activity {
         mSwitchActive = mSwitch.xActive();
         sFillScreen();
         if (mSwitch.xType().equals("esp")){
-            new GetButton().execute();
+            new GetButton(this).execute();
         }
     }
 
@@ -280,7 +295,7 @@ public class ModifySwitch extends Activity {
                     if (mButtonActive == mButton){
                         Toast.makeText(this, R.string.msg_nochange, Toast.LENGTH_SHORT).show();
                     } else {
-                        new SetButton().execute();
+                        new SetButton(this).execute();
                     }
                 } else {
                     Toast.makeText(this, R.string.msg_nochange, Toast.LENGTH_SHORT).show();
@@ -295,7 +310,7 @@ public class ModifySwitch extends Activity {
                     lSwitches[0].xAction(SwitchX.ActionModify);
                     mData.xModifySwitch(lSwitch, mServerName);
                 }
-                new SetSwitch().execute(lSwitches);
+                new SetSwitch(this).execute(lSwitches);
             }
         }
     }
@@ -307,10 +322,40 @@ public class ModifySwitch extends Activity {
         lSwitches = new SwitchX[1];
         lSwitches[0] = new SwitchX(mSwitchId);
         lSwitches[0].xAction(SwitchX.ActionDelete);
-        new SetSwitch().execute(lSwitches);
+        new SetSwitch(this).execute(lSwitches);
 
         mData.xDeleteSwitch(mSwitchId, mServerName);
         finish();
+    }
+
+    private void sFillButton(int pStatus, String pMessage, JSONObject pResult, boolean pMessageOK){
+        String lButton;
+        final String cError = "error";
+
+        switch (pStatus){
+            case Result.cResultOK:
+                lButton = pResult.optString("button", cError);
+                if (lButton.equals(cError)){
+                    Toast.makeText(mContext, "Wrong answer!", Toast.LENGTH_SHORT).show();
+                } else {
+                    mButton = lButton.equals("on");
+                    mButtonActive = mButton;
+                    mChkButton.setChecked(mButtonActive);
+                    if (pMessageOK){
+                        Toast.makeText(mContext, R.string.msg_button_set, Toast.LENGTH_SHORT).show();
+                    }
+                }
+                break;
+            case Result.cResultConnectTimeOut:
+                Toast.makeText(mContext, "Connect Time-Out", Toast.LENGTH_SHORT).show();
+                break;
+            case Result.cResultReadTimeOut:
+                Toast.makeText(mContext, "Read Time-Out", Toast.LENGTH_SHORT).show();
+                break;
+            default:
+                Toast.makeText(mContext, pMessage, Toast.LENGTH_SHORT).show();
+                break;
+        }
     }
 
     private void sFillScreen(){
@@ -479,169 +524,173 @@ public class ModifySwitch extends Activity {
         return lSwitch;
     }
 
-    private class SetSwitch extends AsyncTask<SwitchX, Void, RestAPI.RestResult> {
+    private static class SetSwitch extends AsyncTask<SwitchX, Void, RestAPI.RestResult> {
+        private WeakReference<ModifySwitch> mRefMain;
+
+        private SetSwitch(ModifySwitch pMain){
+            mRefMain = new WeakReference<>(pMain);
+        }
 
         @Override
         protected RestAPI.RestResult doInBackground(SwitchX... pPars) {
-            String lRequestS;
+            ModifySwitch lMain;
+            String lRequest;
             RestAPI.RestResult lOutput;
             RestAPI lRestAPI;
             SwitchX lSwitchX;
-            String lCommand;
-            JSONObject lRequest;
-            JSONObject lSwitch;
+            JSONObject lAction;
+            String lActionS;
 
-            if (pPars.length>0){
-                lSwitchX = pPars[0];
-                lSwitch = lSwitchX.xSwitch();
-                lRequest = new JSONObject();
-                try{
-                    lRequest.put("action", lSwitchX.xAction());
-                    lRequest.put("lang", Locale.getDefault().getLanguage());
-                    lRequest.put("switch", lSwitch);
-                } catch (JSONException pExc){
+            lMain = mRefMain.get();
+            if (lMain == null){
+                return null;
+            } else {
+                if (pPars.length>0){
+                    lSwitchX = pPars[0];
+                    lAction = new JSONObject();
+                    try{
+                        lAction.put("action", lSwitchX.xAction());
+                        lAction.put("lang", Locale.getDefault().getLanguage());
+                        lAction.put("switch", lSwitchX.xSwitch());
+                        lActionS = lAction.toString();
+                    } catch (JSONException pExc){
+                        lActionS = "";
+                    }
+                    lRequest = lMain.mServer.xAddress() + URIs.UriServerSwitch + lSwitchX.xName();
+                    lRestAPI = new RestAPI();
+                    lRestAPI.xMethod(RestAPI.cMethodPut);
+                    lRestAPI.xMediaRequest(RestAPI.cMediaJSON);
+                    lRestAPI.xMediaReply(RestAPI.cMediaJSON);
+                    lRestAPI.xUrl(lRequest);
+                    lRestAPI.xAction(lActionS);
+                    lOutput = lRestAPI.xCallApi();
+                } else {
+                    lOutput = null;
                 }
-                lRequestS = mServer.xAddress() + URIs.UriServerSwitch + lSwitchX.xName();
+
+                return lOutput;
+            }
+        }
+
+        protected void onPostExecute(RestAPI.RestResult pOutput) {
+            ModifySwitch lMain;
+            String lResultS;
+            JSONObject lResult;
+
+            if (pOutput != null){
+                lMain = mRefMain.get();
+                if (lMain != null){
+                    switch (pOutput.xResult()) {
+                        case Result.cResultOK:
+                            lResult = pOutput.xReplyJ();
+                            lResultS = lResult.optString("descr", "JSON error");
+                            Toast.makeText(lMain.mContext, lResultS, Toast.LENGTH_SHORT).show();
+                            break;
+                        case Result.cResultConnectTimeOut:
+                            Toast.makeText(lMain.mContext, "Connect Time-Out", Toast.LENGTH_SHORT).show();
+                            break;
+                        case Result.cResultReadTimeOut:
+                            Toast.makeText(lMain.mContext, "Read Time-Out", Toast.LENGTH_SHORT).show();
+                            break;
+                        default:
+                            Toast.makeText(lMain.mContext, pOutput.xText(), Toast.LENGTH_SHORT).show();
+                            break;
+                    }
+                }
+            }
+        }
+    }
+
+    private static class GetButton extends AsyncTask<Void, Void, RestAPI.RestResult> {
+        private WeakReference<ModifySwitch> mRefMain;
+
+        private GetButton(ModifySwitch pMain){
+            mRefMain = new WeakReference<>(pMain);
+        }
+
+        @Override
+        protected RestAPI.RestResult doInBackground(Void... params) {
+            ModifySwitch lMain;
+            String lRequest;
+            RestAPI.RestResult lOutput;
+            RestAPI lRestAPI;
+
+            lMain = mRefMain.get();
+            if (lMain == null){
+                return null;
+            } else {
+                lRequest = "http://" + lMain.mSwitch.xIP() + URIs.UriSwitch;
+                lRestAPI = new RestAPI();
+                lRestAPI.xMethod(RestAPI.cMethodGet);
+                lRestAPI.xMediaRequest(RestAPI.cMediaText);
+                lRestAPI.xMediaReply(RestAPI.cMediaJSON);
+                lRestAPI.xUrl(lRequest);
+                lRestAPI.xAction("");
+                lOutput = lRestAPI.xCallApi();
+                return lOutput;
+            }
+        }
+
+        protected void onPostExecute(RestAPI.RestResult pOutput) {
+            ModifySwitch lMain;
+
+            if (pOutput != null){
+                lMain = mRefMain.get();
+                if (lMain != null){
+                    lMain.sFillButton(pOutput.xResult(), pOutput.xText(), pOutput.xReplyJ(), false);
+                }
+            }
+        }
+    }
+
+    private static class SetButton extends AsyncTask<Void, Void, RestAPI.RestResult> {
+        private WeakReference<ModifySwitch> mRefMain;
+
+        private SetButton(ModifySwitch pMain){
+            mRefMain = new WeakReference<>(pMain);
+        }
+
+        @Override
+        protected RestAPI.RestResult doInBackground(Void... params) {
+            ModifySwitch lMain;
+            String lRequest;
+            RestAPI.RestResult lOutput;
+            RestAPI lRestAPI;
+            JSONObject lAction;
+            String lActionS;
+
+            lMain = mRefMain.get();
+            if (lMain == null){
+                return null;
+            } else {
+                lAction = new JSONObject();
+                try {
+                    lAction.put("button", (lMain.mButtonActive) ? "on" : "off");
+                    lActionS = lAction.toString();
+                } catch (JSONException pExc){
+                    lActionS = "";
+                }
+
+                lRequest = "http://" + lMain.mSwitch.xIP() + URIs.UriSetting;
                 lRestAPI = new RestAPI();
                 lRestAPI.xMethod(RestAPI.cMethodPut);
                 lRestAPI.xMediaRequest(RestAPI.cMediaJSON);
                 lRestAPI.xMediaReply(RestAPI.cMediaJSON);
-                lRestAPI.xUrl(lRequestS);
-                lRestAPI.xAction(lRequest.toString());
+                lRestAPI.xUrl(lRequest);
+                lRestAPI.xAction(lActionS);
                 lOutput = lRestAPI.xCallApi();
-            } else {
-                lOutput = null;
+                return lOutput;
             }
-
-            return lOutput;
         }
 
         protected void onPostExecute(RestAPI.RestResult pOutput) {
-            String lResultS;
-            JSONObject lResult;
+            ModifySwitch lMain;
 
-            switch (pOutput.xResult()) {
-                case Result.cResultOK:
-                    lResult = pOutput.xReplyJ();
-                    lResultS = lResult.optString("descr", "JSON error");
-                    Toast.makeText(mContext, lResultS, Toast.LENGTH_SHORT).show();
-                    break;
-                case Result.cResultConnectTimeOut:
-                    Toast.makeText(mContext, "Connect Time-Out", Toast.LENGTH_SHORT).show();
-                    break;
-                case Result.cResultReadTimeOut:
-                    Toast.makeText(mContext, "Read Time-Out", Toast.LENGTH_SHORT).show();
-                    break;
-                default:
-                    Toast.makeText(mContext, pOutput.xText(), Toast.LENGTH_SHORT).show();
-                    break;
-            }
-        }
-    }
-
-    private class GetButton extends AsyncTask<Void, Void, RestAPI.RestResult> {
-
-        @Override
-        protected RestAPI.RestResult doInBackground(Void... params) {
-            String lRequest;
-            RestAPI.RestResult lOutput;
-            RestAPI lRestAPI;
-
-            lRequest = "http://" + mSwitch.xIP() + URIs.UriSwitch;
-            lRestAPI = new RestAPI();
-            lRestAPI.xMethod(RestAPI.cMethodGet);
-            lRestAPI.xMediaRequest(RestAPI.cMediaText);
-            lRestAPI.xMediaReply(RestAPI.cMediaJSON);
-            lRestAPI.xUrl(lRequest);
-            lRestAPI.xAction("");
-            lOutput = lRestAPI.xCallApi();
-            return lOutput;
-        }
-
-        protected void onPostExecute(RestAPI.RestResult pOutput) {
-            JSONObject lStatusJ;
-            String lButton;
-            final String cError = "error";
-
-            switch (pOutput.xResult()) {
-                case Result.cResultOK:
-                    lStatusJ = pOutput.xReplyJ();
-                    lButton = lStatusJ.optString("button", cError);
-                    if (lButton.equals(cError)){
-                        Toast.makeText(mContext, "Wrong answer!", Toast.LENGTH_SHORT).show();
-                    } else {
-                        mButton = (lButton.equals("on")) ? true : false;
-                        mButtonActive = mButton;
-                        mChkButton.setChecked(mButtonActive);
-                    }
-                    break;
-                case Result.cResultConnectTimeOut:
-                    Toast.makeText(mContext, "Connect Time-Out", Toast.LENGTH_SHORT).show();
-                    break;
-                case Result.cResultReadTimeOut:
-                    Toast.makeText(mContext, "Read Time-Out", Toast.LENGTH_SHORT).show();
-                    break;
-                default:
-                    Toast.makeText(mContext, pOutput.xText(), Toast.LENGTH_SHORT).show();
-                    break;
-            }
-        }
-    }
-
-    private class SetButton extends AsyncTask<Void, Void, RestAPI.RestResult> {
-
-        @Override
-        protected RestAPI.RestResult doInBackground(Void... params) {
-            String lRequest;
-            RestAPI.RestResult lOutput;
-            RestAPI lRestAPI;
-            JSONObject lCommand;
-
-            lCommand = new JSONObject();
-            try {
-                lCommand.put("button", (mButtonActive) ? "on" : "off");
-            } catch (JSONException pExc){
-                lCommand = null;
-            }
-
-            lRequest = "http://" + mSwitch.xIP() + URIs.UriSetting;
-            lRestAPI = new RestAPI();
-            lRestAPI.xMethod(RestAPI.cMethodPut);
-            lRestAPI.xMediaRequest(RestAPI.cMediaJSON);
-            lRestAPI.xMediaReply(RestAPI.cMediaJSON);
-            lRestAPI.xUrl(lRequest);
-            lRestAPI.xAction(lCommand.toString());
-            lOutput = lRestAPI.xCallApi();
-            return lOutput;
-        }
-
-        protected void onPostExecute(RestAPI.RestResult pOutput) {
-            JSONObject lStatusJ;
-            String lButton;
-            final String cError = "error";
-
-            switch (pOutput.xResult()) {
-                case Result.cResultOK:
-                    lStatusJ = pOutput.xReplyJ();
-                    lButton = lStatusJ.optString("button", cError);
-                    if (lButton.equals(cError)){
-                        Toast.makeText(mContext, "Wrong answer!", Toast.LENGTH_SHORT).show();
-                    } else {
-                        mButton = (lButton.equals("on")) ? true : false;
-                        mButtonActive = mButton;
-                        mChkButton.setChecked(mButtonActive);
-                        Toast.makeText(mContext, R.string.msg_button_set, Toast.LENGTH_SHORT).show();
-                    }
-                    break;
-                case Result.cResultConnectTimeOut:
-                    Toast.makeText(mContext, "Connect Time-Out", Toast.LENGTH_SHORT).show();
-                    break;
-                case Result.cResultReadTimeOut:
-                    Toast.makeText(mContext, "Read Time-Out", Toast.LENGTH_SHORT).show();
-                    break;
-                default:
-                    Toast.makeText(mContext, pOutput.xText(), Toast.LENGTH_SHORT).show();
-                    break;
+            if (pOutput != null){
+                lMain = mRefMain.get();
+                if (lMain != null){
+                    lMain.sFillButton(pOutput.xResult(), pOutput.xText(), pOutput.xReplyJ(), true);
+                }
             }
         }
     }

@@ -17,7 +17,7 @@ import java.util.List;
 public class ManageSwitches extends Activity {
     private final Context mContext = this;
 
-    public static final String cServerName = "ServerName";
+    static final String cServerName = "ServerName";
 
     private String mServerName;
     private Data mData;
@@ -42,13 +42,17 @@ public class ManageSwitches extends Activity {
         if (savedInstanceState==null){
             lInt = getIntent();
             lBundle = lInt.getExtras();
-            mServerName = lBundle.getString(cServerName, "");
+            if (lBundle == null) {
+                finish();
+            } else {
+                mServerName = lBundle.getString(cServerName, "");
+            }
         } else {
             mServerName = savedInstanceState.getString(cServerName);
         }
         mServer = mData.xServer(mServerName);
 
-        mList = (ListView) findViewById(R.id.lstSwitches);
+        mList = findViewById(R.id.lstSwitches);
 
         mListAdapter = new ManageSwitchListAdapter(this, R.layout.manage_switch_list_item, new ArrayList<Switch>());
         mList.setAdapter(mListAdapter);
@@ -56,6 +60,8 @@ public class ManageSwitches extends Activity {
 
     public void onSaveInstanceState(@NonNull Bundle savedInstanceState) {
         savedInstanceState.putString(cServerName, mServerName);
+
+        super.onSaveInstanceState(savedInstanceState);
     }
 
 
@@ -72,13 +78,13 @@ public class ManageSwitches extends Activity {
         Intent lInt;
         Uri lUri;
         Bundle lBundle;
-        Switch lSwitch;
+        ManageSwitchListAdapter.SwitchListHandle lHandle;
 
-        lSwitch = (Switch)pView.getTag();
+        lHandle = (ManageSwitchListAdapter.SwitchListHandle)pView.getTag();
 
         lBundle = new Bundle();
         lBundle.putString(ModifySwitch.cServerName, mServer.xName());
-        lUri = Uri.parse("/switches/" + lSwitch.xName());
+        lUri = Uri.parse("/switches/" + lHandle.xSwitch.xName());
         lInt = new Intent(Intent.ACTION_EDIT, lUri, this, ModifySwitch.class);
         lInt.putExtras(lBundle);
         startActivity(lInt);

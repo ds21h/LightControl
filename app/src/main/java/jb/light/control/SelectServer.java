@@ -31,15 +31,19 @@ public class SelectServer extends Activity {
 
         if (savedInstanceState==null){
             lBundle = getIntent().getExtras();
-            mServers = lBundle.getStringArrayList(cServers);
-            mSelection = 0;
+            if (lBundle == null) {
+                finish();
+            } else {
+                mServers = lBundle.getStringArrayList(cServers);
+                mSelection = 0;
+            }
         } else {
             mServers = savedInstanceState.getStringArrayList(cServers);
             mSelection = savedInstanceState.getInt(cSelection);
         }
 
-        mSpServer = (Spinner)findViewById(R.id.spServer);
-        mAdpServer = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, mServers);
+        mSpServer = findViewById(R.id.spServer);
+        mAdpServer = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, mServers);
         mAdpServer.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mSpServer.setAdapter(mAdpServer);
         mSpServer.setSelection(mSelection);
@@ -48,6 +52,8 @@ public class SelectServer extends Activity {
     public void onSaveInstanceState(@NonNull Bundle savedInstanceState) {
         savedInstanceState.putStringArrayList(cServers, mServers);
         savedInstanceState.putInt(cSelection, mSpServer.getSelectedItemPosition());
+
+        super.onSaveInstanceState(savedInstanceState);
     }
 
     public void sProcessSelection(View pView){

@@ -5,34 +5,22 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.os.Environment;
 
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-import org.xmlpull.v1.XmlPullParserFactory;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.GregorianCalendar;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Created by Jan on 14-5-2017.
  */
 
-public class Data extends SQLiteOpenHelper {
+class Data extends SQLiteOpenHelper {
     private static Data mInstance = null;
 
     private static final String cDBName = "LightControl.db";
     private static final int cDBVersion = 1;
 
-    public static Data getInstance(Context pContext) {
-        /**
+    static Data getInstance(Context pContext) {
+        /*
          * use the application context as suggested by CommonsWare.
          * this will ensure that you dont accidentally leak an Activitys
          * context (see this article for more information:
@@ -99,7 +87,7 @@ public class Data extends SQLiteOpenHelper {
         );
     }
 
-    public Server xServer(String pName){
+    Server xServer(String pName){
         Server lServer = null;
         SQLiteDatabase lDB;
         Cursor lCursor;
@@ -125,7 +113,7 @@ public class Data extends SQLiteOpenHelper {
             lIP = lCursor.getString(2);
             lPort = lCursor.getString(3);
             lManager = lCursor.getInt(4);
-            lServer = new Server(lName, lSSID, lIP, lPort, (lManager == 0) ? false : true);
+            lServer = new Server(lName, lSSID, lIP, lPort, lManager != 0);
         }
         lCursor.close();
         lDB.close();
@@ -133,7 +121,7 @@ public class Data extends SQLiteOpenHelper {
         return lServer;
     }
 
-    public List<Server> xServers(String pSSID){
+    List<Server> xServers(String pSSID){
         List<Server> lServers;
         Server lServer;
         SQLiteDatabase lDB;
@@ -162,7 +150,7 @@ public class Data extends SQLiteOpenHelper {
             lIP = lCursor.getString(2);
             lPort = lCursor.getString(3);
             lManager = lCursor.getInt(4);
-            lServer = new Server(lName, lSSID, lIP, lPort, (lManager == 0) ? false : true);
+            lServer = new Server(lName, lSSID, lIP, lPort, lManager != 0);
             lServers.add(lServer);
         }
         lCursor.close();
@@ -171,7 +159,7 @@ public class Data extends SQLiteOpenHelper {
         return lServers;
     }
 
-    public List<Server> xServers(){
+    List<Server> xServers(){
         List<Server> lServers;
         Server lServer;
         SQLiteDatabase lDB;
@@ -196,7 +184,7 @@ public class Data extends SQLiteOpenHelper {
             lIP = lCursor.getString(2);
             lPort = lCursor.getString(3);
             lManager = lCursor.getInt(4);
-            lServer = new Server(lName, lSSID, lIP, lPort, (lManager == 0) ? false : true);
+            lServer = new Server(lName, lSSID, lIP, lPort, lManager != 0);
             lServers.add(lServer);
         }
         lCursor.close();
@@ -205,7 +193,7 @@ public class Data extends SQLiteOpenHelper {
         return lServers;
     }
 
-    public int xNewServer(Server pServer){
+    int xNewServer(Server pServer){
         SQLiteDatabase lDB;
         ContentValues lValues;
         long lRow;
@@ -230,7 +218,7 @@ public class Data extends SQLiteOpenHelper {
         return lResult;
     }
 
-    public int xModifyServer(Server pServer){
+    int xModifyServer(Server pServer){
         SQLiteDatabase lDB;
         ContentValues lValues;
         String lSelection;
@@ -260,7 +248,7 @@ public class Data extends SQLiteOpenHelper {
         return  lResult;
     }
 
-    public int xDeleteServer(String pServerName){
+    int xDeleteServer(String pServerName){
         SQLiteDatabase lDB;
         String lSelection;
         String[] lSelectionArgs;
@@ -284,7 +272,7 @@ public class Data extends SQLiteOpenHelper {
         return  lResult;
     }
 
-    public List<Switch> xSwitches(String pServer){
+    List<Switch> xSwitches(String pServer){
         List<Switch> lSwitches;
         Switch lSwitch;
         SQLiteDatabase lDB;
@@ -325,7 +313,7 @@ public class Data extends SQLiteOpenHelper {
             lPoint = lCursor.getString(5);
             lIP = lCursor.getString(6);
             lPause = lCursor.getInt(7);
-            lSwitch = new Switch(lSeqNumber, lName, (lActive == 0) ? false : true, lType, lGroup, lPoint, lPause, lIP);
+            lSwitch = new Switch(lSeqNumber, lName, lActive != 0, lType, lGroup, lPoint, lPause, lIP);
             lSwitches.add(lSwitch);
         }
         lCursor.close();
@@ -334,7 +322,7 @@ public class Data extends SQLiteOpenHelper {
         return lSwitches;
     }
 
-    public Switch xSwitch(String pServer, String pName){
+    Switch xSwitch(String pServer, String pName){
         Switch lSwitch = null;
         SQLiteDatabase lDB;
         Cursor lCursor;
@@ -370,7 +358,7 @@ public class Data extends SQLiteOpenHelper {
             lPoint = lCursor.getString(5);
             lIP = lCursor.getString(6);
             lPause = lCursor.getInt(7);
-            lSwitch = new Switch(lSeqNumber, lName, (lActive == 0) ? false : true, lType, lGroup, lPoint, lPause, lIP);
+            lSwitch = new Switch(lSeqNumber, lName, lActive != 0, lType, lGroup, lPoint, lPause, lIP);
         }
         lCursor.close();
         lDB.close();
@@ -378,7 +366,7 @@ public class Data extends SQLiteOpenHelper {
         return lSwitch;
     }
 
-    public void xSaveSwitches(List<Switch> pSwitches, String pServerName){
+    boolean xSaveSwitches(List<Switch> pSwitches, String pServerName){
         List<Switch> lSwitches;
         int lCountOld;
         int lCountNew;
@@ -410,6 +398,7 @@ public class Data extends SQLiteOpenHelper {
         if (!lEqual){
             sReplaceSwitches(pSwitches, pServerName);
         }
+        return !lEqual;
     }
 
     private int sReplaceSwitches(List<Switch> pSwitches, String pServer){
@@ -453,7 +442,7 @@ public class Data extends SQLiteOpenHelper {
         return lResult;
     }
 
-    public int xModifySwitch(Switch pSwitch, String pServerName){
+    int xModifySwitch(Switch pSwitch, String pServerName){
         SQLiteDatabase lDB;
         ContentValues lValues;
         String lSelection;
@@ -486,7 +475,7 @@ public class Data extends SQLiteOpenHelper {
         return  lResult;
     }
 
-    public int xNewSwitch(Switch pSwitch, String pServerName){
+    int xNewSwitch(Switch pSwitch, String pServerName){
         SQLiteDatabase lDB;
         ContentValues lValues;
         long lRow;
@@ -517,7 +506,7 @@ public class Data extends SQLiteOpenHelper {
         return  lResult;
     }
 
-    public int xDeleteSwitch(String pSwitchName, String pServerName){
+    int xDeleteSwitch(String pSwitchName, String pServerName){
         SQLiteDatabase lDB;
         String lSelection;
         String[] lSelectionArgs;

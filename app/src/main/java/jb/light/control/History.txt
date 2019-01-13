@@ -22,4 +22,12 @@ Version 3.0 - 16-12-2018
     -   Upgraded Settings communication to JSON
     -   Translated db to English --> Not compatible, in first run for a server please re-enter server details.
     -   Completely multi lingual. Now English and Dutch. Additional languages are easily added.
-    -   Requires LightAPI version 1.0 on server
+    -   Requires LightAPI version 1.0 or later on server
+
+Version 3.1 - 13-01-2019
+    -   REST calls model simplified
+    -   Added active status enquiries (every 10 seconds)
+    -   Time-outs for status enquiries reduced to 2 seconds
+    -   AsyncTasks changed to static with WeakReference to main class
+    -   Changed to package-private where possible
+    -   All ListAdapters changed to recycle model with holder class

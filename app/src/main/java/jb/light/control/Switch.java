@@ -95,7 +95,7 @@ public class Switch {
                 lSwitch.put(cIP, mIP);
             }
             lSwitch.put(cActive, mActive);
-        } catch (JSONException pExc) {
+        } catch (JSONException ignored) {
         }
 
         return lSwitch;

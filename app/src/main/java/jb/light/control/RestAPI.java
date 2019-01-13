@@ -15,48 +15,59 @@ import java.net.URL;
 /**
  * Created by Jan on 17-9-2015.
  */
-public class RestAPI {
-    public static final String cMethodGet = "GET";
-    public static final String cMethodPut = "PUT";
+class RestAPI {
+    static final String cMethodGet = "GET";
+    static final String cMethodPut = "PUT";
 
-    public static final String cMediaJSON = "application/json";
-    public static final String cMediaText = "text/plain";
+    static final String cMediaJSON = "application/json";
+    static final String cMediaText = "text/plain";
 
     private String mMethod;
     private String mMediaRequest;
     private String mMediaReply;
     private String mUrl;
     private String mAction;
+    private int mTimeOut;
+    private final int cTimeOutMin = 1000;
+    private final int cTimeOutMax = 5000;
+    private final int cTimeOutDef = 5000;
 
-    public RestAPI(){
+    RestAPI(){
         mMethod = cMethodGet;
         mMediaRequest = cMediaText;
         mMediaReply = cMediaJSON;
         mUrl = "";
         mAction = "";
+        mTimeOut = cTimeOutDef;
     }
 
-    public void xMethod(String pMethod){
+    void xMethod(String pMethod){
         mMethod = pMethod;
     }
 
-    public void xMediaRequest(String pMedia){
+    void xMediaRequest(String pMedia){
         mMediaRequest = pMedia;
     }
 
-    public void xMediaReply(String pMedia){
+    void xMediaReply(String pMedia){
         mMediaReply = pMedia;
     }
 
-    public void xUrl(String pUrl){
+    void xUrl(String pUrl){
         mUrl = pUrl;
     }
 
-    public void xAction(String pAction){
+    void xAction(String pAction){
         mAction = pAction;
     }
 
-    public RestResult xCallApi(){
+    void xTimeOut(int pTimeOut){
+        if (pTimeOut >= cTimeOutMin && pTimeOut <= cTimeOutMax){
+            mTimeOut = pTimeOut;
+        }
+    }
+
+    RestResult xCallApi(){
         String lOutput;
         StringBuilder lStr;
         String lUrlS;
@@ -87,8 +98,8 @@ public class RestAPI {
             lConn = (HttpURLConnection) lUrl.openConnection();
             lConn.setRequestMethod(mMethod);
             lConn.setRequestProperty("Accept", mMediaReply);
-            lConn.setConnectTimeout(5000);
-            lConn.setReadTimeout(5000);
+            lConn.setConnectTimeout(mTimeOut );
+            lConn.setReadTimeout(mTimeOut );
             if (!lAction.equals("")) {
                 lConn.setRequestProperty("Content-Type", mMediaRequest);
                 lConn.setDoOutput(true);
@@ -128,22 +139,22 @@ public class RestAPI {
         return lRestResult;
     }
 
-    public class RestResult {
+    class RestResult {
         private int mResult;
         private String mText;
         private JSONObject mReplyJ;
         private String mReplyS;
         private boolean mJson;
 
-        public int xResult(){
+        int xResult(){
             return mResult;
         }
 
-        public String xText() {
+        String xText() {
             return mText;
         }
 
-        public JSONObject xReplyJ(){
+        JSONObject xReplyJ(){
             if (mJson){
                 return mReplyJ;
             } else {
@@ -151,11 +162,11 @@ public class RestAPI {
             }
         }
 
-        public String xReplyS(){
+        String xReplyS(){
             return mReplyS;
         }
 
-        public RestResult(int pResult, String pOutput){
+        RestResult(int pResult, String pOutput){
             mReplyS = pOutput;
             if (mMediaReply.equals(cMediaJSON)){
                 try {
@@ -177,7 +188,7 @@ public class RestAPI {
             }
         }
 
-        public RestResult(String pText, int pResult){
+        RestResult(String pText, int pResult){
             mReplyJ = null;
             mReplyS = null;
             mResult = pResult;

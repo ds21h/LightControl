@@ -11,5 +11,6 @@ public class Result {
     static final int cResultConnectTimeOut = 4;
     static final int cResultReadTimeOut = 5;
     static final int cResultOutputFout = 6;
+    static final int cResultJSONError = 7;
     static final int cResultError = 9;
 }

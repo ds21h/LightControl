@@ -2,5 +2,42 @@
 
 This is an Android app to control the Lights project. For an overview please see repository Lights.
 
-The software is completely in Dutch. It will be translated into English in a future version.
 The project structure is that of AndroidStudio.
+
+Tis app started its life completely in the Dutch language. Starting from version 2.9 it is in English.
+
+History:
+Versie 1.0 - 01-11-2015
+    -   Eerste stabiele versie
+
+Versie 2.0 - 08-10-2017
+    -   Ondersteuning ESP8266 Schakelaars
+    -   Lokale DB met schakelaarinfo zodat ESP8266 schakelaars ook zonder server geschakeld kunnen worden
+    -   Server definitie in lokale DB ipv XML file
+
+Versie 2.01 - 10-07-2018
+    -   ACCESS_COARSE_LOCATION toegevoegd. Is noodzakelijk voor Android 8.1 (Oreo) om SSID op te vragen.
+
+Version 2.9 - 03-12-2018
+    -   Translated into English (only program itself, database and communication still in dutch).
+    -   Communication with esp switch changed to English
+    -   URI Switch/Button abandoned. Now Switch/Setting is used
+    -   Classes Setting and Switch no longer in seperate package.
+    -   Requires ESP8266-Switch software version 2.1 or later.
+
+Version 3.0 - 16-12-2018
+    -   Switch to English server, so all URIs are in English.
+    -   Grouped all used URIs in one static class URIs. This makes it easier to find where which URI is used.
+    -   Upgraded to Android 6+ permissions model
+    -   Upgraded Settings communication to JSON
+    -   Translated db to English --> Not compatible, in first run for a server please re-enter server details.
+    -   Completely multi lingual. Now English and Dutch. Additional languages are easily added.
+    -   Requires LightAPI version 1.0 or later on server
+
+Version 3.1 - 13-01-2019
+    -   REST calls model simplified
+    -   Added active status enquiries (every 10 seconds)
+    -   Time-outs for status enquiries reduced to 2 seconds
+    -   AsyncTasks changed to static with WeakReference to main class
+    -   Changed to package-private where possible
+    -   All ListAdapters changed to recycle model with holder class

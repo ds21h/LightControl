@@ -1,6 +1,7 @@
 package jb.light.control;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.TimePickerDialog;
 import android.content.Context;
@@ -30,6 +31,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.ref.WeakReference;
 import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
@@ -40,27 +42,22 @@ import java.util.GregorianCalendar;
 import java.util.List;
 
 public class LightControl extends Activity {
-    private static final String cSwitchesInit = "SwitchesInit";
     private static final String cServerName = "ServerName";
-    private static final String cActions = "Actions";
-    private static final String cActionReady = "ActionReady";
-    private static final String cCurrentAction = "CurrentAction";
-    private static final String cActionsActive = "ActionsActive";
-    private static final String cNumberCorrect = "NumberCorrect";
-    private static final String cNumberIncorrect = "NumberIncorrect";
 
     private static final int cRequestLocation = 1;
 
     private final Context mContext = this;
 
+    @SuppressLint("SimpleDateFormat")
     private final static SimpleDateFormat mFormatDate = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+    @SuppressLint("SimpleDateFormat")
     private final static SimpleDateFormat mFormatTime = new SimpleDateFormat("HH:mm");
     private Date mLightsOff = null;
     private String mSunset = "";
     private int mHourLightsOff = -1;
     private int mMinuteLightsOff = -1;
 
-    private ListView mList;
+    private ListView mLstSwitch;
     private MainSwitchListAdapter mListAdapter;
     private TextView mTxtSunset;
     private TextView mLbReading;
@@ -71,29 +68,35 @@ public class LightControl extends Activity {
     private Server mServer;
     private Data mData;
 
-    private boolean mServerReply = false;
-    private String mServerName;
+    private String mServerName = "";
 
-    private boolean mSwitchesInit;
-
-    ArrayList<Action> mActions;
-    private int mCurrentAction;
-    private boolean mActionsActive;
-    private int mNumberCorrect;
-    private int mNumberIncorrect;
-
-    private boolean mActionReady;
-
-    Handler mTimerHandler = new Handler();
-    Runnable mTimerRunnable = new Runnable() {
-
+    Handler mRefreshHandler = new Handler();
+    Runnable mRefreshRunnable = new Runnable() {
         @Override
         public void run() {
-            if (mActionReady) {
-                sActionStep();
-            } else {
-                mTimerHandler.postDelayed(this, 100);
+            int lNumberRow;
+            int lCount;
+            View lView;
+            MainSwitchListAdapter.SwitchItemHandle lHandle;
+            Action lAction;
+
+            if (mServer != null) {
+                new GetOverview(LightControl.this).execute();
             }
+            lNumberRow = mLstSwitch.getChildCount();
+            for (lCount = 0; lCount < lNumberRow; lCount++) {
+                lView = mLstSwitch.getChildAt(lCount);
+                lHandle = (MainSwitchListAdapter.SwitchItemHandle) lView.getTag();
+                if (lHandle.xSwitch.xActive()) {
+                    if (lHandle.xSwitch.xType().equals("esp")) {
+                        lAction = new Action(Action.ActionInqSwitch);
+                        lAction.xValue(lHandle.xSwitch.xName());
+                        lAction.xIP(lHandle.xSwitch.xIP());
+                        new EspSwitch(LightControl.this).execute(lAction);
+                    }
+                }
+            }
+            mRefreshHandler.postDelayed(this, 10000);
         }
     };
 
@@ -107,7 +110,7 @@ public class LightControl extends Activity {
         mTxtReading = findViewById(R.id.txtReading);
         mTxtLightsOff = findViewById(R.id.txtLightOff);
         mChkAll = findViewById(R.id.chkAll);
-        mList = findViewById(R.id.lstSwitches);
+        mLstSwitch = findViewById(R.id.lstSwitches);
 
         mTxtSunset.setText("");
         mLbReading.setVisibility(View.INVISIBLE);
@@ -115,73 +118,35 @@ public class LightControl extends Activity {
         mTxtReading.setText("");
         mTxtLightsOff.setText("");
         mListAdapter = new MainSwitchListAdapter(LightControl.this, R.layout.main_switch_list_item, new ArrayList<Switch>());
-        mList.setAdapter(mListAdapter);
+        mLstSwitch.setAdapter(mListAdapter);
 
         mData = Data.getInstance(mContext);
-//        mData.xInitServers();
 
         if (savedInstanceState == null) {
-            mSwitchesInit = false;
-            mServerName = "";
-            mActions = new ArrayList<>();
-            mActionReady = true;
-            mCurrentAction = 0;
-            mActionsActive = false;
-            mNumberCorrect = 0;
-            mNumberIncorrect = 0;
-            if (sCheckPermissions()){
-                sInitServer();
-            }
+            sCheckPermissions();
+            mServerName = sGetServerName();
         } else {
-            mSwitchesInit = savedInstanceState.getBoolean(cSwitchesInit);
             mServerName = savedInstanceState.getString(cServerName);
-            mActions = savedInstanceState.getParcelableArrayList(cActions);
-            mActionReady = savedInstanceState.getBoolean(cActionReady);
-            mCurrentAction = savedInstanceState.getInt(cCurrentAction);
-            mActionsActive = savedInstanceState.getBoolean(cActionsActive);
-            mNumberCorrect = savedInstanceState.getInt(cNumberCorrect);
-            mNumberIncorrect = savedInstanceState.getInt(cNumberIncorrect);
-
-            mServer = mData.xServer(mServerName);
         }
-
-        if (mServer != null) {
-            new GetOverview().execute();
-        }
-    }
-
-    public void onSaveInstanceState(@NonNull Bundle savedInstanceState) {
-        String lName;
-
-        savedInstanceState.putBoolean(cSwitchesInit, mSwitchesInit);
-        if (mServer == null) {
-            lName = "";
-        } else {
-            lName = mServer.xName();
-        }
-        savedInstanceState.putString(cServerName, lName);
-        savedInstanceState.putParcelableArrayList(cActions, mActions);
-        savedInstanceState.putBoolean(cActionReady, mActionReady);
-        savedInstanceState.putInt(cCurrentAction, mCurrentAction);
-        savedInstanceState.putBoolean(cActionsActive, mActionsActive);
-        savedInstanceState.putInt(cNumberCorrect, mNumberCorrect);
-        savedInstanceState.putInt(cNumberIncorrect, mNumberIncorrect);
     }
 
     @Override
-    public void onPause() {
-        super.onPause();
-        mTimerHandler.removeCallbacks(mTimerRunnable);
+    public void onSaveInstanceState(@NonNull Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+        savedInstanceState.putString(cServerName, mServerName);
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu pMenu) {
+        super.onCreateOptionsMenu(pMenu);
         getMenuInflater().inflate(R.menu.light_control_menu, pMenu);
         return true;
     }
 
     @Override
     public boolean onPrepareOptionsMenu(Menu pMenu) {
+        super.onPrepareOptionsMenu(pMenu);
+
         MenuItem lManageSwitches;
         MenuItem lManageSettings;
         boolean lManageEnabled;
@@ -205,48 +170,42 @@ public class LightControl extends Activity {
         if (pRequest == 1) {
             if (pResult == RESULT_OK) {
                 lBundle = pInt.getExtras();
-                mServerName = lBundle.getString(SelectServer.cServerName);
-                mServerReply = true;
-            }
-            if (pResult == RESULT_CANCELED) {
-                mServerReply = true;
+                if (lBundle != null) {
+                    mServerName = lBundle.getString(SelectServer.cServerName);
+                }
             }
         }
     }
 
     @Override
     public void onResume() {
-        List<Switch> lSwitches;
-
         super.onResume();
 
+        List<Switch> lSwitches;
+
         mServer = mData.xServer(mServerName);
-        if (mServerReply) {
-            mServerReply = false;
-            invalidateOptionsMenu();
-            new GetOverview().execute();
-        } else {
-            if (mActionsActive) {
-                mTimerHandler.postDelayed(mTimerRunnable, 1);
-            }
-        }
-        if (mSwitchesInit) {
+        invalidateOptionsMenu();
+        if (mServer != null) {
             lSwitches = mData.xSwitches(mServer.xName());
             mListAdapter.clear();
             mListAdapter.addAll(lSwitches);
+            mRefreshHandler.postDelayed(mRefreshRunnable, 100);
         }
     }
 
     @Override
-    public void onRequestPermissionsResult(int pRequest, String permissions[], int[] pResults) {
+    public void onPause() {
+        super.onPause();
+        mRefreshHandler.removeCallbacks(mRefreshRunnable);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int pRequest, @NonNull String permissions[], @NonNull int[] pResults) {
         switch (pRequest) {
             case cRequestLocation: {
                 // If request is cancelled, the result arrays are empty.
                 if (pResults.length > 0 && pResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    sInitServer();
-                    if (mServer != null) {
-                        new GetOverview().execute();
-                    }
+                    sGetServerName();
                 } else {
                     Toast.makeText(mContext, R.string.msg_Insuff_perm, Toast.LENGTH_SHORT).show();
                     finish();
@@ -255,19 +214,16 @@ public class LightControl extends Activity {
         }
     }
 
-    private boolean sCheckPermissions() {
+    private void sCheckPermissions() {
         if (ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
                     cRequestLocation);
-            return false;
-        } else {
-            return true;
         }
     }
 
-    private void sInitServer() {
+    private String sGetServerName() {
         ConnectivityManager lConnect;
         NetworkInfo lNet;
         WifiManager lWifi;
@@ -275,34 +231,40 @@ public class LightControl extends Activity {
         String lSSId;
         boolean lConnected;
         List<Server> lServerList;
+        String lServerName;
 
+        lServerName = "";
         lConnect = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        lNet = lConnect.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-        lConnected = lNet.isConnected();
-        if (lConnected) {
-            lWifi = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
-            lInfo = lWifi.getConnectionInfo();
-            lSSId = lInfo.getSSID();
-            if (lSSId.startsWith("\"")) {
-                lSSId = lSSId.substring(1, lSSId.length() - 1);
-            }
-            lServerList = mData.xServers(lSSId);
-            if (lServerList.size() < 1) {
-                Toast.makeText(mContext, R.string.msg_nolightserver, Toast.LENGTH_SHORT).show();
-                mServer = null;
-            } else {
-                if (lServerList.size() > 1) {
-                    mServer = null;
-                    sSelectServer(lServerList);
+        if (lConnect != null) {
+            lNet = lConnect.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+            lConnected = lNet.isConnected();
+            if (lConnected) {
+                lWifi = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+                if (lWifi != null) {
+                    lInfo = lWifi.getConnectionInfo();
+                    lSSId = lInfo.getSSID();
+                    if (lSSId.startsWith("\"")) {
+                        lSSId = lSSId.substring(1, lSSId.length() - 1);
+                    }
+                    lServerList = mData.xServers(lSSId);
+                    if (lServerList.size() < 1) {
+                        Toast.makeText(mContext, R.string.msg_nolightserver, Toast.LENGTH_SHORT).show();
+                    } else {
+                        lServerName = lServerList.get(0).xName();
+                        if (lServerList.size() > 1) {
+                            sSelectServer(lServerList);
+                        }
+                    }
                 } else {
-                    mServer = lServerList.get(0);
-                    mServerName = mServer.xName();
+                    Toast.makeText(mContext, R.string.msg_nonetwork, Toast.LENGTH_SHORT).show();
                 }
+            } else {
+                Toast.makeText(mContext, R.string.msg_nonetwork, Toast.LENGTH_SHORT).show();
             }
         } else {
             Toast.makeText(mContext, R.string.msg_nonetwork, Toast.LENGTH_SHORT).show();
-            mServer = null;
         }
+        return lServerName;
     }
 
     private void sSelectServer(List<Server> pServers) {
@@ -318,15 +280,10 @@ public class LightControl extends Activity {
         lBundle = new Bundle();
         lBundle.putStringArrayList(SelectServer.cServers, lServers);
 
-        mServerName = lServers.get(0);
         lInt = new Intent();
         lInt.setClass(this, SelectServer.class);
         lInt.putExtras(lBundle);
         startActivityForResult(lInt, 1);
-    }
-
-    public void sRefresh(MenuItem pItem) {
-        new GetOverview().execute();
     }
 
     public void sManageServers(MenuItem pItem) {
@@ -343,7 +300,7 @@ public class LightControl extends Activity {
         Intent lInt;
         Bundle lBundle;
 
-        if (mSwitchesInit) {
+        if (mServer != null) {
             lUri = Uri.parse("/switches");
             lBundle = new Bundle();
             lBundle.putString(ManageSwitches.cServerName, mServer.xName());
@@ -368,6 +325,126 @@ public class LightControl extends Activity {
         }
     }
 
+    private void sProcessOverview(int pResult, String pMessage, JSONObject pOverview) {
+        String lLightOff = "";
+        int lFase = 0;
+        int lReading = 0;
+        Date lSunsetDate;
+        String lSunset = "";
+        List<Switch> lSwitches;
+        JSONArray lSwitchesJ;
+        int lCount;
+        JSONObject lSwitchJ;
+        Switch lSwitch;
+        boolean lSaveResult;
+
+        switch (pResult) {
+            case Result.cResultOK:
+                try {
+                    mSunset = pOverview.optString("sunset", "");
+                    if (mSunset.equals("")) {
+//                        lLightOff = "";
+//                        lFase = 0;
+//                        lReading = 0;
+                        Toast.makeText(mContext, "Parse-error sunset", Toast.LENGTH_SHORT).show();
+                    } else {
+                        lLightOff = pOverview.optString("lightoff", "");
+                        lFase = pOverview.optInt("fase", 0);
+                        lReading = pOverview.optInt("lightreading", 0);
+                        try {
+                            lSunsetDate = mFormatDate.parse(mSunset);
+                            mLightsOff = mFormatDate.parse(lLightOff);
+                            lSunset = mFormatTime.format(lSunsetDate);
+                            lLightOff = mFormatTime.format(mLightsOff);
+                            mHourLightsOff = -1;
+                            mMinuteLightsOff = -1;
+                        } catch (ParseException pExc) {
+                            lLightOff = "";
+                            mSunset = "";
+                            mLightsOff = null;
+                            Toast.makeText(mContext, "Parse-error sunset", Toast.LENGTH_SHORT).show();
+                        }
+                        lSwitches = new ArrayList<>();
+                        lSwitchesJ = pOverview.getJSONArray("switches");
+                        for (lCount = 0; lCount < lSwitchesJ.length(); lCount++) {
+                            lSwitchJ = lSwitchesJ.getJSONObject(lCount);
+                            lSwitch = new Switch(lSwitchJ);
+                            lSwitches.add(lSwitch);
+                        }
+                        lSaveResult = mData.xSaveSwitches(lSwitches, mServer.xName());
+                        if (lSaveResult) {
+                            lSwitches = mData.xSwitches(mServer.xName());
+                            mListAdapter.clear();
+                            mListAdapter.addAll(lSwitches);
+                        }
+                    }
+                } catch (JSONException pExc) {
+                    Toast.makeText(mContext, "JSON error: " + pExc.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+                }
+                break;
+            case Result.cResultConnectTimeOut:
+                Toast.makeText(mContext, "Connect Time-Out", Toast.LENGTH_SHORT).show();
+                break;
+            case Result.cResultReadTimeOut:
+                Toast.makeText(mContext, "Read Time-Out", Toast.LENGTH_SHORT).show();
+                break;
+            default:
+                Toast.makeText(mContext, pMessage, Toast.LENGTH_SHORT).show();
+                break;
+        }
+
+        mTxtSunset.setText(lSunset);
+        mTxtLightsOff.setText(lLightOff);
+        if (lFase == 2) {
+            mTxtReading.setText(String.valueOf(lReading));
+            mLbReading.setVisibility(View.VISIBLE);
+            mTxtReading.setVisibility(View.VISIBLE);
+        } else {
+            mLbReading.setVisibility(View.INVISIBLE);
+            mTxtReading.setVisibility(View.INVISIBLE);
+            mTxtReading.setText("");
+        }
+    }
+
+    private void sSetSwitchStatus(JSONObject pSwitchStatus) {
+        String lName;
+        String lStatus;
+        int lNumberRow;
+        int lCount;
+        View lView;
+        MainSwitchListAdapter.SwitchItemHandle lHandle = null;
+        boolean lFound = false;
+
+        if (pSwitchStatus != null) {
+            lName = pSwitchStatus.optString("name", "");
+            lStatus = pSwitchStatus.optString("status", "");
+            if (!lName.equals((""))) {
+                lNumberRow = mLstSwitch.getChildCount();
+                for (lCount = 0; lCount < lNumberRow; lCount++) {
+                    lView = mLstSwitch.getChildAt(lCount);
+                    lHandle = (MainSwitchListAdapter.SwitchItemHandle) lView.getTag();
+                    if (lHandle.xSwitch.xActive()) {
+                        if (lHandle.xSwitch.xName().equals(lName)) {
+                            lFound = true;
+                            break;
+                        }
+                    }
+                }
+                if (lFound) {
+                    if (lStatus.equals("on")) {
+                        lHandle.xImgStatus.setImageResource(R.mipmap.light_on);
+                    } else {
+                        if (lStatus.equals("off")) {
+                            lHandle.xImgStatus.setImageResource(R.mipmap.light_off);
+                        } else {
+                            lHandle.xImgStatus.setImageResource(R.mipmap.question);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     public void sSelectAll(View pView) {
         boolean lSelect;
         int lNumberRow;
@@ -377,9 +454,9 @@ public class LightControl extends Activity {
 
         lSelect = mChkAll.isChecked();
 
-        lNumberRow = mList.getChildCount();
+        lNumberRow = mLstSwitch.getChildCount();
         for (lCount = 0; lCount < lNumberRow; lCount++) {
-            lView = mList.getChildAt(lCount);
+            lView = mLstSwitch.getChildAt(lCount);
             lHandle = (MainSwitchListAdapter.SwitchItemHandle) lView.getTag();
             if (lHandle.xSwitch.xActive()) {
                 lHandle.xChkSelect.setChecked(lSelect);
@@ -395,11 +472,11 @@ public class LightControl extends Activity {
         View lView;
         MainSwitchListAdapter.SwitchItemHandle lHandle;
 
-        lNumberRow = mList.getChildCount();
+        lNumberRow = mLstSwitch.getChildCount();
         lCheck = 0;
         lActive = 0;
         for (lCount = 0; lCount < lNumberRow; lCount++) {
-            lView = mList.getChildAt(lCount);
+            lView = mLstSwitch.getChildAt(lCount);
             lHandle = (MainSwitchListAdapter.SwitchItemHandle) lView.getTag();
             if (lHandle.xChkSelect.isChecked()) {
                 lCheck++;
@@ -413,7 +490,6 @@ public class LightControl extends Activity {
         } else {
             mChkAll.setChecked(true);
         }
-
     }
 
     public void sSelectOn(View pView) {
@@ -431,11 +507,9 @@ public class LightControl extends Activity {
         MainSwitchListAdapter.SwitchItemHandle lHandle;
         Action lAction;
 
-        mActions.clear();
-
-        lNumberRow = mList.getChildCount();
+        lNumberRow = mLstSwitch.getChildCount();
         for (lCount = 0; lCount < lNumberRow; lCount++) {
-            lView = mList.getChildAt(lCount);
+            lView = mLstSwitch.getChildAt(lCount);
             lHandle = (MainSwitchListAdapter.SwitchItemHandle) lView.getTag();
             if (lHandle.xSwitch.xActive()) {
                 if (lHandle.xChkSelect.isChecked()) {
@@ -448,14 +522,15 @@ public class LightControl extends Activity {
                     lAction.xValue(lHandle.xSwitch.xName());
                     if (lHandle.xSwitch.xType().equals("esp")) {
                         lAction.xIP(lHandle.xSwitch.xIP());
+                        new EspSwitch(this).execute(lAction);
                     } else {
                         lAction.xIP("");
+                        new SetAction(this).execute(lAction);
                     }
-                    mActions.add(lAction);
                 }
             }
         }
-        sProcessActions();
+        mChkAll.setChecked(false);
     }
 
     public void sSetTimeLightOff(View pView) {
@@ -483,11 +558,9 @@ public class LightControl extends Activity {
 
                     lLightOffS = sMakeDateTime(pHour, pMinute);
 
-                    mActions.clear();
                     lAction = new Action(Action.ActionLightsOff);
                     lAction.xValue(lLightOffS);
-                    mActions.add(lAction);
-                    sProcessActions();
+                    new SetAction(LightControl.this).execute(lAction);
                 }
             }, lHour, lMinute, true);
             lPicker.show();
@@ -524,295 +597,164 @@ public class LightControl extends Activity {
         } else {
             lResult = "";
         }
-
         return lResult;
     }
 
-    private void sProcessActions() {
-        mCurrentAction = -1;
-        mNumberCorrect = 0;
-        mNumberIncorrect = 0;
-        sActionStep();
-    }
+    private static class GetOverview extends AsyncTask<Void, Void, RestAPI.RestResult> {
+        private WeakReference<LightControl> mRefMain;
 
-    private void sActionStep() {
-        Action lAction;
-        int lCount;
-        boolean lActive;
-        String lText;
-
-        lActive = false;
-        for (lCount = 0; lCount < mActions.size(); lCount++) {
-            lAction = mActions.get(lCount);
-            if (!lAction.xProcessed()) {
-                mCurrentAction = lCount;
-                mActionReady = false;
-                mActionsActive = true;
-                lActive = true;
-                mTimerHandler.postDelayed(mTimerRunnable, 100);
-                if (lAction.xToServer()) {
-                    mNumberCorrect = -1;
-                    new SetAction().execute();
-                } else {
-                    new SetActionIOT().execute();
-                }
-                break;
-            }
+        private GetOverview(LightControl pMain) {
+            mRefMain = new WeakReference<>(pMain);
         }
-        if (!lActive) {
-            mActionsActive = false;
-            if (mNumberCorrect >= 0) {
-                if (mNumberCorrect == 0) {
-                    if (mNumberIncorrect == 0) {
-                        lText = getString(R.string.msg_noaction);
-                    } else {
-                        lText = getString(R.string.msg_actionfailed);
-                    }
-                } else {
-                    if (mNumberIncorrect == 0) {
-                        lText = getString(R.string.msg_actionsucceed);
-                    } else {
-                        lText = getString(R.string.msg_actionpartsucceed);
-                    }
-                }
-                Toast.makeText(mContext, lText, Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-
-    private class GetOverview extends AsyncTask<Void, Void, RestAPI.RestResult> {
 
         @Override
         protected RestAPI.RestResult doInBackground(Void... params) {
+            LightControl lMain;
             String lRequest;
             RestAPI.RestResult lOutput;
             RestAPI lRestAPI;
 
-            lRequest = mServer.xAddress() + URIs.UriServerSurvey;
-            lRestAPI = new RestAPI();
-            lRestAPI.xMethod(RestAPI.cMethodGet);
-            lRestAPI.xMediaRequest(RestAPI.cMediaText);
-            lRestAPI.xMediaReply(RestAPI.cMediaJSON);
-            lRestAPI.xUrl(lRequest);
-            lRestAPI.xAction("");
-            lOutput = lRestAPI.xCallApi();
-            return lOutput;
+            lMain = mRefMain.get();
+            if (lMain == null) {
+                return null;
+            } else {
+                lRequest = lMain.mServer.xAddress() + URIs.UriServerSurvey;
+                lRestAPI = new RestAPI();
+                lRestAPI.xMethod(RestAPI.cMethodGet);
+                lRestAPI.xMediaRequest(RestAPI.cMediaText);
+                lRestAPI.xMediaReply(RestAPI.cMediaJSON);
+                lRestAPI.xUrl(lRequest);
+                lRestAPI.xAction("");
+                lOutput = lRestAPI.xCallApi();
+                return lOutput;
+            }
         }
 
         protected void onPostExecute(RestAPI.RestResult pOutput) {
-            String lSunset = "";
-            Date lSunsetDate = null;
-            String lLightOff = "";
-            int lFase = 0;
-            int lReading = 0;
-            JSONObject lOverview;
-            JSONArray lSwitchesJ;
-            JSONObject lSwitchJ;
-            List<Switch> lSwitches;
-            Switch lSwitch;
-            int lCount;
+            LightControl lMain;
 
-            switch (pOutput.xResult()) {
-                case Result.cResultOK:
-                    try {
-                        lOverview = pOutput.xReplyJ();
-                        mSunset = lOverview.optString("sunset", "");
-                        if (mSunset.equals("")) {
-                            lLightOff = "";
-                            lFase = 0;
-                            lReading = 0;
-                            Toast.makeText(mContext, "Parse-error sunset", Toast.LENGTH_SHORT).show();
-                        } else {
-                            lLightOff = lOverview.optString("lightoff", "");
-                            lFase = lOverview.optInt("fase", 0);
-                            lReading = lOverview.optInt("lightreading", 0);
-                            try {
-                                lSunsetDate = mFormatDate.parse(mSunset);
-                                mLightsOff = mFormatDate.parse(lLightOff);
-                                lSunset = mFormatTime.format(lSunsetDate);
-                                lLightOff = mFormatTime.format(mLightsOff);
-                                mHourLightsOff = -1;
-                                mMinuteLightsOff = -1;
-                            } catch (ParseException pExc) {
-                                lLightOff = "";
-                                mSunset = "";
-                                mLightsOff = null;
-                                Toast.makeText(mContext, "Parse-error sunset", Toast.LENGTH_SHORT).show();
-                            }
-                            lSwitches = new ArrayList<>();
-                            lSwitchesJ = lOverview.getJSONArray("switches");
-                            for (lCount = 0; lCount < lSwitchesJ.length(); lCount++) {
-                                lSwitchJ = lSwitchesJ.getJSONObject(lCount);
-                                lSwitch = new Switch(lSwitchJ);
-                                lSwitches.add(lSwitch);
-                            }
-                            mData.xSaveSwitches(lSwitches, mServer.xName());
-                            mSwitchesInit = true;
-                        }
-                    } catch (JSONException pExc) {
-                        Toast.makeText(mContext, "JSON error: " + pExc.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
-                    }
-                    break;
-                case Result.cResultConnectTimeOut:
-                    Toast.makeText(mContext, "Connect Time-Out", Toast.LENGTH_SHORT).show();
-                    break;
-                case Result.cResultReadTimeOut:
-                    Toast.makeText(mContext, "Read Time-Out", Toast.LENGTH_SHORT).show();
-                    break;
-                default:
-                    Toast.makeText(mContext, pOutput.xText(), Toast.LENGTH_SHORT).show();
-                    break;
-            }
-
-            mTxtSunset.setText(lSunset);
-            mTxtLightsOff.setText(lLightOff);
-            lSwitches = mData.xSwitches(mServer.xName());
-            mListAdapter.clear();
-            mListAdapter.addAll(lSwitches);
-            if (lFase == 2) {
-                mTxtReading.setText(String.valueOf(lReading));
-                mLbReading.setVisibility(View.VISIBLE);
-                mTxtReading.setVisibility(View.VISIBLE);
-            } else {
-                mLbReading.setVisibility(View.INVISIBLE);
-                mTxtReading.setVisibility(View.INVISIBLE);
-                mTxtReading.setText("");
+            lMain = mRefMain.get();
+            if (lMain != null) {
+                lMain.sProcessOverview(pOutput.xResult(), pOutput.xText(), pOutput.xReplyJ());
             }
         }
     }
 
-    private class SetAction extends AsyncTask<Void, Void, RestAPI.RestResult> {
+    private static class SetAction extends AsyncTask<Action, Void, RestAPI.RestResult> {
+        private WeakReference<LightControl> mRefMain;
+
+        private SetAction(LightControl pMain) {
+            mRefMain = new WeakReference<>(pMain);
+        }
 
         @Override
-        protected RestAPI.RestResult doInBackground(Void... params) {
+        protected RestAPI.RestResult doInBackground(Action... pActions) {
+            LightControl lMain;
             String lRequest;
-            RestAPI.RestResult lOutput;
+            RestAPI.RestResult lOutput = null;
             RestAPI lRestAPI;
             Action lAction;
             String lCommand;
-            String lCommandStep;
-            int lCount;
 
-            lCommand = "";
-            for (lCount = 0; lCount < mActions.size(); lCount++) {
-                lAction = mActions.get(lCount);
-                if (!lAction.xProcessed()) {
-                    lAction.xProcessed(true);
+            if (pActions.length > 0) {
+                lMain = mRefMain.get();
+                if (lMain != null) {
+                    lAction = pActions[0];
+                    lCommand = "";
                     switch (lAction.xAction()) {
                         case Action.ActionSwitchOn:
-                            lCommandStep = "switchon=" + lAction.xValue();
+                            lCommand = "switchon=" + lAction.xValue();
                             break;
                         case Action.ActionSwitchOff:
-                            lCommandStep = "switchoff=" + lAction.xValue();
+                            lCommand = "switchoff=" + lAction.xValue();
                             break;
                         case Action.ActionLightsOff:
-                            lCommandStep = "lightoff=" + lAction.xValue();
-                            break;
-                        default:
-                            lCommandStep = "";
+                            lCommand = "lightoff=" + lAction.xValue();
                             break;
                     }
-                    if (lCommand.equals("")) {
-                        lCommand = lCommandStep;
-                    } else {
-                        if (!lCommandStep.equals("")) {
-                            lCommand = lCommand + "&" + lCommandStep;
-                        }
-                    }
+                    lRequest = lMain.mServer.xAddress() + URIs.UriServerAction;
+                    lRestAPI = new RestAPI();
+                    lRestAPI.xMethod(RestAPI.cMethodPut);
+                    lRestAPI.xMediaRequest(RestAPI.cMediaText);
+                    lRestAPI.xMediaReply(RestAPI.cMediaJSON);
+                    lRestAPI.xUrl(lRequest);
+                    lRestAPI.xAction(lCommand);
+                    lOutput = lRestAPI.xCallApi();
                 }
             }
-            lRequest = mServer.xAddress() + URIs.UriServerAction;
-            lRestAPI = new RestAPI();
-            lRestAPI.xMethod(RestAPI.cMethodPut);
-            lRestAPI.xMediaRequest(RestAPI.cMediaText);
-            lRestAPI.xMediaReply(RestAPI.cMediaJSON);
-            lRestAPI.xUrl(lRequest);
-            lRestAPI.xAction(lCommand);
-            lOutput = lRestAPI.xCallApi();
-
             return lOutput;
-        }
-
-        protected void onPostExecute(RestAPI.RestResult pOutput) {
-            String lResult;
-            JSONObject lActionResult;
-
-            switch (pOutput.xResult()) {
-                case Result.cResultOK:
-                    try {
-                        lActionResult = pOutput.xReplyJ();
-                        lResult = lActionResult.getString("descr");
-                    } catch (JSONException pExc) {
-                        lResult = "JSON error: " + pExc.getLocalizedMessage();
-                    }
-                    Toast.makeText(mContext, lResult, Toast.LENGTH_SHORT).show();
-                    break;
-                case Result.cResultConnectTimeOut:
-                    Toast.makeText(mContext, "Connect Time-Out", Toast.LENGTH_SHORT).show();
-                    break;
-                case Result.cResultReadTimeOut:
-                    Toast.makeText(mContext, "Read Time-Out", Toast.LENGTH_SHORT).show();
-                    break;
-                default:
-                    Toast.makeText(mContext, pOutput.xText(), Toast.LENGTH_SHORT).show();
-                    break;
-            }
-            mActionReady = true;
         }
     }
 
-    private class SetActionIOT extends AsyncTask<Void, Void, RestAPI.RestResult> {
+    private static class EspSwitch extends AsyncTask<Action, Void, RestAPI.RestResult> {
+        WeakReference<LightControl> mRefMain;
+
+        private EspSwitch(LightControl pMain) {
+            mRefMain = new WeakReference<>(pMain);
+        }
 
         @Override
-        protected RestAPI.RestResult doInBackground(Void... params) {
+        protected RestAPI.RestResult doInBackground(Action... pActions) {
             String lRequest;
-            RestAPI.RestResult lOutput;
+            RestAPI.RestResult lOutput = null;
             RestAPI lRestAPI;
             Action lAction;
             JSONObject lCommand;
+            String lCommandS;
 
-            lAction = mActions.get(mCurrentAction);
-            lAction.xProcessed(true);
-            lCommand = new JSONObject();
-            try {
-                if (lAction.xAction() == Action.ActionSwitchOn) {
-                    lCommand.put("status", "on");
-                } else {
-                    lCommand.put("status", "off");
+            if (pActions.length > 0) {
+                lAction = pActions[0];
+                lCommand = new JSONObject();
+                lRestAPI = new RestAPI();
+                lRequest = "http://" + lAction.xIP() + URIs.UriSwitch;
+                lRestAPI.xUrl(lRequest);
+                try {
+                    switch (lAction.xAction()) {
+                        case Action.ActionSwitchOn: {
+                            lCommand.put("status", "on");
+                            lCommandS = lCommand.toString();
+                            lRestAPI.xMethod(RestAPI.cMethodPut);
+                            lRestAPI.xMediaRequest(RestAPI.cMediaJSON);
+                            break;
+                        }
+                        case Action.ActionSwitchOff: {
+                            lCommand.put("status", "off");
+                            lCommandS = lCommand.toString();
+                            lRestAPI.xMethod(RestAPI.cMethodPut);
+                            lRestAPI.xMediaRequest(RestAPI.cMediaJSON);
+                            break;
+                        }
+                        case Action.ActionInqSwitch: {
+                            lCommandS = "";
+                            lRestAPI.xMethod(RestAPI.cMethodGet);
+                            lRestAPI.xTimeOut(2000);
+                            break;
+                        }
+                        default: {
+                            lCommandS = "";
+                            break;
+                        }
+                    }
+                } catch (JSONException pExc) {
+                    lCommandS = "";
+                    lRestAPI.xMethod(RestAPI.cMethodGet);
                 }
-
-            } catch (JSONException pExc) {
-                lCommand = null;
+                lRestAPI.xMediaReply(RestAPI.cMediaJSON);
+                lRestAPI.xAction(lCommandS);
+                lOutput = lRestAPI.xCallApi();
             }
-            lRequest = "http://" + lAction.xIP() + URIs.UriSwitch;
-            lRestAPI = new RestAPI();
-            lRestAPI.xMethod(RestAPI.cMethodPut);
-            lRestAPI.xMediaRequest(RestAPI.cMediaJSON);
-            lRestAPI.xMediaReply(RestAPI.cMediaJSON);
-            lRestAPI.xUrl(lRequest);
-            lRestAPI.xAction(lCommand.toString());
-            lOutput = lRestAPI.xCallApi();
-
             return lOutput;
         }
 
         protected void onPostExecute(RestAPI.RestResult pOutput) {
-            String lResult;
-            JSONObject lActionResult;
-            final String cError = "error";
+            LightControl lMain;
 
-            if (pOutput.xResult() == Result.cResultOK) {
-                lActionResult = pOutput.xReplyJ();
-                lResult = lActionResult.optString("status", cError);
-                if (lResult.equals(cError)) {
-                    mNumberIncorrect++;
-                } else {
-                    mNumberCorrect++;
+            lMain = mRefMain.get();
+            if (lMain != null) {
+                if (pOutput != null && pOutput.xResult() == Result.cResultOK) {
+                    lMain.sSetSwitchStatus(pOutput.xReplyJ());
                 }
-            } else {
-                mNumberIncorrect++;
             }
-            mActionReady = true;
         }
     }
 }

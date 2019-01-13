@@ -3,10 +3,10 @@ package jb.light.control;
 /**
  * Created by Jan on 28-11-2015.
  */
-public class SettingItem {
-    public static final String TypeLocation = "location";
-    public static final String TypeLightsOff = "lightsoff";
-    public static final String TypeSensor = "sensor";
+class SettingItem {
+    static final String TypeLocation = "location";
+    static final String TypeLightsOff = "lightsoff";
+    static final String TypeSensor = "sensor";
 
     private String mType;
     private String mAttr1;
@@ -14,7 +14,7 @@ public class SettingItem {
     private String mAttr3;
     private String mAttr4;
 
-    public SettingItem(){
+    SettingItem(){
         mType = "";
         mAttr1 = "";
         mAttr2 = "";
@@ -22,43 +22,43 @@ public class SettingItem {
         mAttr4 = "";
     }
 
-    public void xType(String pType){
+    void xType(String pType){
         mType = pType;
     }
 
-    public String xType(){
+    String xType(){
         return mType;
     }
 
-    public void xAttr1(String pAttr1){
+    void xAttr1(String pAttr1){
         mAttr1 = pAttr1;
     }
 
-    public String xAttr1(){
+    String xAttr1(){
         return mAttr1;
     }
 
-    public void xAttr2(String pAttr2){
+    void xAttr2(String pAttr2){
         mAttr2 = pAttr2;
     }
 
-    public String xAttr2(){
+    String xAttr2(){
         return mAttr2;
     }
 
-    public void xAttr3(String pAttr3){
+    void xAttr3(String pAttr3){
         mAttr3 = pAttr3;
     }
 
-    public String xAttr3(){
+    String xAttr3(){
         return mAttr3;
     }
 
-    public void xAttr4(String pAttr4){
+    void xAttr4(String pAttr4){
         mAttr4 = pAttr4;
     }
 
-    public String xAttr4(){
+    String xAttr4(){
         return mAttr4;
     }
 }

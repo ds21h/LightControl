@@ -2,6 +2,7 @@ package jb.light.control;
 
 import android.app.Activity;
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,65 +16,91 @@ import java.util.List;
  * Created by Jan on 18-9-2015.
  */
 public class ManageSwitchListAdapter extends ArrayAdapter<Switch> {
-
-    protected static final String LOG_TAG = ManageSwitchListAdapter.class.getSimpleName();
-
     private List<Switch> mSwitches;
-    private int mSwitchItem;
+    private int mLayout;
     private Context mContext;
 
-    public ManageSwitchListAdapter(Context pContext, int pSwitchItem, List<Switch> pSwitches) {
-        super(pContext, pSwitchItem, pSwitches);
-        mSwitchItem = pSwitchItem;
+    ManageSwitchListAdapter(Context pContext, int pLayout, List<Switch> pSwitches) {
+        super(pContext, pLayout, pSwitches);
+        mLayout = pLayout;
         mContext = pContext;
         mSwitches = pSwitches;
     }
 
     @Override
-    public View getView(int pPos, View pView, ViewGroup pGroup) {
-        View lRow = pView;
-        TextView lTxtName;
-        TextView lTxtType;
-        CheckBox lChkActive;
-        TextView lTxtGroup;
-        TextView lTxtPoint;
-        TextView lTxtIP;
-        TextView lTxtPause;
-        Switch lSwitch;
-        LinearLayout lLyoFM;
-        LinearLayout lLyoIot;
-        LinearLayout.LayoutParams lParams;
+    public @NonNull View getView(int pPos, View pView, @NonNull ViewGroup pGroup) {
+        View lRow;
+        SwitchListHandle lHandle;
+        Object lTag = null;
+        boolean lRecycle;
 
-        LayoutInflater inflater = ((Activity) mContext).getLayoutInflater();
-        lRow = inflater.inflate(mSwitchItem, pGroup, false);
-
-        lTxtName = (TextView)lRow.findViewById(R.id.txtName);
-        lTxtType = (TextView)lRow.findViewById(R.id.txtType);
-        lChkActive = (CheckBox)lRow.findViewById(R.id.chkActive);
-        lTxtGroup = (TextView)lRow.findViewById(R.id.txtGroup);
-        lTxtPoint = (TextView)lRow.findViewById(R.id.txtPoint);
-        lTxtIP = (TextView)lRow.findViewById(R.id.txtIP);
-        lTxtPause = (TextView)lRow.findViewById(R.id.txtPause);
-        lLyoFM = (LinearLayout)lRow.findViewById((R.id.lyoFM));
-        lLyoIot = (LinearLayout)lRow.findViewById((R.id.lyoIot));
-
-        lSwitch = mSwitches.get(pPos);
-        lTxtName.setText(lSwitch.xName());
-        lTxtType.setText(lSwitch.xType());
-        lChkActive.setChecked(lSwitch.xActive());
-        lParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0);
-        if (lSwitch.xType().equals("esp")){
-            lLyoFM.setLayoutParams(lParams);
-            lTxtIP.setText(lSwitch.xIP());
+        if (pView == null) {
+            lRecycle = false;
         } else {
-            lLyoIot.setLayoutParams(lParams);
-            lTxtGroup.setText(lSwitch.xGroup());
-            lTxtPoint.setText(lSwitch.xPoint());
+            lTag = pView.getTag();
+            lRecycle = lTag instanceof SwitchListHandle;
         }
-        lTxtPause.setText(String.valueOf(lSwitch.xPause()));
+        if (lRecycle) {
+            lHandle = (SwitchListHandle)lTag;
+            lRow = pView;
+        } else {
+            LayoutInflater inflater = ((Activity) mContext).getLayoutInflater();
+            lRow = inflater.inflate(mLayout, pGroup, false);
 
-        lRow.setTag(lSwitch);
+            lHandle = new SwitchListHandle();
+            lHandle.xTxtName = lRow.findViewById(R.id.txtName);
+            lHandle.xTxtType = lRow.findViewById(R.id.txtType);
+            lHandle.xChkActive = lRow.findViewById(R.id.chkActive);
+            lHandle.xTxtGroup = lRow.findViewById(R.id.txtGroup);
+            lHandle.xTxtPoint = lRow.findViewById(R.id.txtPoint);
+            lHandle.xTxtIP = lRow.findViewById(R.id.txtIP);
+            lHandle.xTxtPause = lRow.findViewById(R.id.txtPause);
+            lHandle.xLyoFM = lRow.findViewById((R.id.lyoFM));
+            lHandle.xLyoIot = lRow.findViewById((R.id.lyoIot));
 
+            lHandle.xParHide = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0);
+            lHandle.xParShow = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+
+            lRow.setTag(lHandle);
+        }
+
+        sSetItem(lHandle, pPos);
         return lRow;
+    }
+
+    private void sSetItem(SwitchListHandle pHandle, int pPos) {
+        pHandle.xSwitch = mSwitches.get(pPos);
+        pHandle.xTxtName.setText(pHandle.xSwitch.xName());
+        pHandle.xTxtType.setText(pHandle.xSwitch.xType());
+        pHandle.xChkActive.setChecked(pHandle.xSwitch.xActive());
+        if (pHandle.xSwitch.xType().equals("esp")){
+            pHandle.xLyoFM.setLayoutParams(pHandle.xParHide);
+            pHandle.xLyoIot.setLayoutParams(pHandle.xParShow);
+            pHandle.xTxtIP.setText(pHandle.xSwitch.xIP());
+            pHandle.xTxtGroup.setText("");
+            pHandle.xTxtPoint.setText("");
+        } else {
+            pHandle.xLyoFM.setLayoutParams(pHandle.xParShow);
+            pHandle.xLyoIot.setLayoutParams(pHandle.xParHide);
+            pHandle.xTxtIP.setText("");
+            pHandle.xTxtGroup.setText(pHandle.xSwitch.xGroup());
+            pHandle.xTxtPoint.setText(pHandle.xSwitch.xPoint());
+        }
+        pHandle.xTxtPause.setText(String.valueOf(pHandle.xSwitch.xPause()));
+    }
+
+    static class SwitchListHandle{
+        Switch xSwitch;
+        TextView xTxtName;
+        TextView xTxtType;
+        CheckBox xChkActive;
+        TextView xTxtGroup;
+        TextView xTxtPoint;
+        TextView xTxtIP;
+        TextView xTxtPause;
+        LinearLayout xLyoFM;
+        LinearLayout xLyoIot;
+        LinearLayout.LayoutParams xParHide;
+        LinearLayout.LayoutParams xParShow;
     }
 }

@@ -26,6 +26,7 @@ public class ManageServers extends Activity {
     }
 
     public void onSaveInstanceState(@NonNull Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
     }
 
 
@@ -36,9 +37,9 @@ public class ManageServers extends Activity {
         ListView lList;
         ServerListAdapter lListAdapter;
 
-        lList = (ListView) findViewById(R.id.lstServers);
+        lList = findViewById(R.id.lstServers);
 
-        lListAdapter = new ServerListAdapter(this, R.layout.manage_server_list_item, ((ArrayList) mData.xServers()));
+        lListAdapter = new ServerListAdapter(this, R.layout.manage_server_list_item, mData.xServers());
         lList.setAdapter(lListAdapter);
     }
 
