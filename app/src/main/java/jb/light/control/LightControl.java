@@ -200,7 +200,7 @@ public class LightControl extends Activity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int pRequest, @NonNull String permissions[], @NonNull int[] pResults) {
+    public void onRequestPermissionsResult(int pRequest, @NonNull String[] permissions, @NonNull int[] pResults) {
         switch (pRequest) {
             case cRequestLocation: {
                 // If request is cancelled, the result arrays are empty.
@@ -343,9 +343,6 @@ public class LightControl extends Activity {
                 try {
                     mSunset = pOverview.optString("sunset", "");
                     if (mSunset.equals("")) {
-//                        lLightOff = "";
-//                        lFase = 0;
-//                        lReading = 0;
                         Toast.makeText(mContext, "Parse-error sunset", Toast.LENGTH_SHORT).show();
                     } else {
                         lLightOff = pOverview.optString("lightoff", "");
@@ -406,8 +403,7 @@ public class LightControl extends Activity {
         }
     }
 
-    private void sSetSwitchStatus(JSONObject pSwitchStatus) {
-        String lName;
+    private void sSetSwitchStatus(Action pAction, JSONObject pSwitchStatus) {
         String lStatus;
         int lNumberRow;
         int lCount;
@@ -415,22 +411,23 @@ public class LightControl extends Activity {
         MainSwitchListAdapter.SwitchItemHandle lHandle = null;
         boolean lFound = false;
 
-        if (pSwitchStatus != null) {
-            lName = pSwitchStatus.optString("name", "");
-            lStatus = pSwitchStatus.optString("status", "");
-            if (!lName.equals((""))) {
-                lNumberRow = mLstSwitch.getChildCount();
-                for (lCount = 0; lCount < lNumberRow; lCount++) {
-                    lView = mLstSwitch.getChildAt(lCount);
-                    lHandle = (MainSwitchListAdapter.SwitchItemHandle) lView.getTag();
-                    if (lHandle.xSwitch.xActive()) {
-                        if (lHandle.xSwitch.xName().equals(lName)) {
-                            lFound = true;
-                            break;
-                        }
+        if (pAction != null){
+            lNumberRow = mLstSwitch.getChildCount();
+            for (lCount = 0; lCount < lNumberRow; lCount++) {
+                lView = mLstSwitch.getChildAt(lCount);
+                lHandle = (MainSwitchListAdapter.SwitchItemHandle) lView.getTag();
+                if (lHandle.xSwitch.xActive()) {
+                    if (lHandle.xSwitch.xName().equals(pAction.xValue())) {
+                        lFound = true;
+                        break;
                     }
                 }
-                if (lFound) {
+            }
+            if (lFound) {
+                if (pSwitchStatus == null){
+                    lHandle.xImgStatus.setImageResource(R.mipmap.question);
+                } else {
+                    lStatus = pSwitchStatus.optString("status", "");
                     if (lStatus.equals("on")) {
                         lHandle.xImgStatus.setImageResource(R.mipmap.light_on);
                     } else {
@@ -687,7 +684,8 @@ public class LightControl extends Activity {
     }
 
     private static class EspSwitch extends AsyncTask<Action, Void, RestAPI.RestResult> {
-        WeakReference<LightControl> mRefMain;
+       private WeakReference<LightControl> mRefMain;
+       private Action mAction;
 
         private EspSwitch(LightControl pMain) {
             mRefMain = new WeakReference<>(pMain);
@@ -695,53 +693,62 @@ public class LightControl extends Activity {
 
         @Override
         protected RestAPI.RestResult doInBackground(Action... pActions) {
+            LightControl lMain;
             String lRequest;
-            RestAPI.RestResult lOutput = null;
+            RestAPI.RestResult lOutput;
             RestAPI lRestAPI;
-            Action lAction;
             JSONObject lCommand;
             String lCommandS;
 
-            if (pActions.length > 0) {
-                lAction = pActions[0];
-                lCommand = new JSONObject();
-                lRestAPI = new RestAPI();
-                lRequest = "http://" + lAction.xIP() + URIs.UriSwitch;
-                lRestAPI.xUrl(lRequest);
-                try {
-                    switch (lAction.xAction()) {
-                        case Action.ActionSwitchOn: {
-                            lCommand.put("status", "on");
-                            lCommandS = lCommand.toString();
-                            lRestAPI.xMethod(RestAPI.cMethodPut);
-                            lRestAPI.xMediaRequest(RestAPI.cMediaJSON);
-                            break;
+            lMain = mRefMain.get();
+            if (lMain == null) {
+                lOutput = null;
+                mAction = null;
+            } else {
+                if (pActions.length > 0) {
+                    mAction = pActions[0];
+                    lCommand = new JSONObject();
+                    lRestAPI = new RestAPI();
+                    lRequest = "http://" + mAction.xIP() + URIs.UriSwitch;
+                    lRestAPI.xUrl(lRequest);
+                    try {
+                        switch (mAction.xAction()) {
+                            case Action.ActionSwitchOn: {
+                                lCommand.put("status", "on");
+                                lCommandS = lCommand.toString();
+                                lRestAPI.xMethod(RestAPI.cMethodPut);
+                                lRestAPI.xMediaRequest(RestAPI.cMediaJSON);
+                                break;
+                            }
+                            case Action.ActionSwitchOff: {
+                                lCommand.put("status", "off");
+                                lCommandS = lCommand.toString();
+                                lRestAPI.xMethod(RestAPI.cMethodPut);
+                                lRestAPI.xMediaRequest(RestAPI.cMediaJSON);
+                                break;
+                            }
+                            case Action.ActionInqSwitch: {
+                                lCommandS = "";
+                                lRestAPI.xMethod(RestAPI.cMethodGet);
+                                lRestAPI.xTimeOut(2000);
+                                break;
+                            }
+                            default: {
+                                lCommandS = "";
+                                break;
+                            }
                         }
-                        case Action.ActionSwitchOff: {
-                            lCommand.put("status", "off");
-                            lCommandS = lCommand.toString();
-                            lRestAPI.xMethod(RestAPI.cMethodPut);
-                            lRestAPI.xMediaRequest(RestAPI.cMediaJSON);
-                            break;
-                        }
-                        case Action.ActionInqSwitch: {
-                            lCommandS = "";
-                            lRestAPI.xMethod(RestAPI.cMethodGet);
-                            lRestAPI.xTimeOut(2000);
-                            break;
-                        }
-                        default: {
-                            lCommandS = "";
-                            break;
-                        }
+                    } catch (JSONException pExc) {
+                        lCommandS = "";
+                        lRestAPI.xMethod(RestAPI.cMethodGet);
                     }
-                } catch (JSONException pExc) {
-                    lCommandS = "";
-                    lRestAPI.xMethod(RestAPI.cMethodGet);
+                    lRestAPI.xMediaReply(RestAPI.cMediaJSON);
+                    lRestAPI.xAction(lCommandS);
+                    lOutput = lRestAPI.xCallApi();
+                } else {
+                    lOutput = null;
+                    mAction = null;
                 }
-                lRestAPI.xMediaReply(RestAPI.cMediaJSON);
-                lRestAPI.xAction(lCommandS);
-                lOutput = lRestAPI.xCallApi();
             }
             return lOutput;
         }
@@ -751,8 +758,8 @@ public class LightControl extends Activity {
 
             lMain = mRefMain.get();
             if (lMain != null) {
-                if (pOutput != null && pOutput.xResult() == Result.cResultOK) {
-                    lMain.sSetSwitchStatus(pOutput.xReplyJ());
+                if (pOutput != null) {
+                    lMain.sSetSwitchStatus(mAction, pOutput.xReplyJ());
                 }
             }
         }
