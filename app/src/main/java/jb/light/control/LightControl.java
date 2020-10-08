@@ -14,9 +14,9 @@ import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -215,10 +215,10 @@ public class LightControl extends Activity {
     }
 
     private void sCheckPermissions() {
-        if (ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION)
+        if (ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     cRequestLocation);
         }
     }
@@ -233,8 +233,7 @@ public class LightControl extends Activity {
         List<Server> lServerList;
         String lServerName;
 
-        lServerName = "";
-        lConnect = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        lServerName = "";        lConnect = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         if (lConnect != null) {
             lNet = lConnect.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
             lConnected = lNet.isConnected();
@@ -246,6 +245,7 @@ public class LightControl extends Activity {
                     if (lSSId.startsWith("\"")) {
                         lSSId = lSSId.substring(1, lSSId.length() - 1);
                     }
+
                     lServerList = mData.xServers(lSSId);
                     if (lServerList.size() < 1) {
                         Toast.makeText(mContext, R.string.msg_nolightserver, Toast.LENGTH_SHORT).show();

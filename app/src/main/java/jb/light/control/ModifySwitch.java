@@ -6,7 +6,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -285,7 +285,7 @@ public class ModifySwitch extends Activity {
 
     public void sProcess(MenuItem pItem){
         Switch lSwitch;
-        SwitchX lSwitches[];
+        SwitchX[] lSwitches;
 
         sReadScreen();
         lSwitch = sProcessScreen();
@@ -316,7 +316,7 @@ public class ModifySwitch extends Activity {
     }
 
     public void sDelete(MenuItem pItem){
-        SwitchX lSwitches[];
+        SwitchX[] lSwitches;
 
         sReadScreen();
         lSwitches = new SwitchX[1];

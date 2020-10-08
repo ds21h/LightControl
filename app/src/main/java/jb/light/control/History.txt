@@ -34,3 +34,10 @@ Version 3.1 - 13-01-2019
 
 Version 3.1.1 - 09-06-2019
     -   Updated status inquiry protocol. IO errors now result in status 'unknown'
+
+Version 3.1.2 - 08-10-2020
+    -   Upgraded to API 30 (Android 10)
+    -   Minimum API changed to 19 (Android 4.4)
+    -   Converted to AndroidX
+    -   usesCleartextTraffic added in manifest
+    -   permission changed from CoarseLocation to FineLocation

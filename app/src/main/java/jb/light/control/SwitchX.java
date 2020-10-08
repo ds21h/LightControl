@@ -1,6 +1,6 @@
 package jb.light.control;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 /**
  * Created by Jan on 17-11-2015.
