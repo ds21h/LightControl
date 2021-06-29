@@ -8,8 +8,16 @@ This app started its life completely in the Dutch language. Starting from versio
 
 History:
 
+Version 3.2 - 29-06-2021<br />
+    -   Deleted support of obsolete attributes:<br />
+        Switch: Type, Group and Point<br />
+        Setting: MaxSensor<br />
+    -   Deleted AsyncTask implementations (declared obsolete). Now using threadpool on application-level.<br />
+    -   Switch inquiries now parallel, so better response time overall.<br />
+    -   Moved OnClick listener declarations from layout to code.<br />
+
 Version 3.1.2 - 08-10-2020<br />
-    -   Upgraded to API 30 (Android 10)<br />
+    -   Upgraded to API 30 (Android 11)<br />
     -   Minimum API changed to 19 (Android 4.4)<br />
     -   Converted to AndroidX<br />
     -   usesCleartextTraffic added in manifest<br />

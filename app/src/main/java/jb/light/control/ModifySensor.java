@@ -6,6 +6,10 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
+
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
@@ -19,9 +23,9 @@ import java.util.Locale;
 public class ModifySensor extends Activity {
     private final Context mContext = this;
 
+    static final String cSetting = "Setting";
     public static final String cServerName = "ServerName";
     private static final String cTreshold = "Treshold";
-    private static final String cMax = "Max";
     private static final String cInterval = "Interval";
     private static final String cRepeat = "Repeat";
 
@@ -29,16 +33,31 @@ public class ModifySensor extends Activity {
 
     private Data mData;
     private Server mServer;
+    private Setting mSetting;
 
     private EditText mEdtTreshold;
-    private EditText mEdtMax;
     private EditText mEdtInterval;
     private EditText mEdtRepeat;
 
     private int mTreshold;
-    private int mMax;
     private int mInterval;
     private int mRepeat;
+
+    Handler mUpdateHandler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
+        @Override
+        public boolean handleMessage(@NonNull Message pMessage) {
+            if ((pMessage.what & PutSettingRunnable.cSettingProcessedOK) != 0){
+                mTreshold = mSetting.xSensorLimit();
+                mInterval = mSetting.xPeriodSec();
+                mRepeat = mSetting.xPeriodDark();
+                sFillScreen();
+                Toast.makeText(mContext, getString(R.string.msg_update_OK), Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(mContext, getString(R.string.msg_update_NOK), Toast.LENGTH_SHORT).show();
+            }
+            return true;
+        }
+    });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,9 +66,9 @@ public class ModifySensor extends Activity {
 
         Intent lInt;
         Bundle lBundle;
+        JSONObject lSetting;
 
         mEdtTreshold = findViewById(R.id.edtTreshold);
-        mEdtMax = findViewById(R.id.edtMax);
         mEdtInterval = findViewById(R.id.edtInterval);
         mEdtRepeat = findViewById(R.id.edtRepeat);
 
@@ -60,26 +79,33 @@ public class ModifySensor extends Activity {
             lBundle = lInt.getExtras();
             if (lBundle == null){
                 mServerName = "";
+                mSetting = new Setting();
             } else {
                 mServerName = lBundle.getString(cServerName, "");
+                try{
+                    lSetting = new JSONObject(lBundle.getString(cSetting));
+                    mSetting = new Setting(lSetting);
+                } catch (JSONException pExc){
+                    mSetting = new Setting();
+                }
             }
-            mTreshold = 0;
-            mMax = 0;
-            mInterval = 0;
-            mRepeat = 0;
+            mTreshold = mSetting.xSensorLimit();
+            mInterval = mSetting.xPeriodSec();
+            mRepeat = mSetting.xPeriodDark();
         } else {
+            try{
+                lSetting = new JSONObject(savedInstanceState.getString(cSetting));
+                mSetting = new Setting(lSetting);
+            } catch (JSONException pExc){
+                mSetting = new Setting();
+            }
             mServerName = savedInstanceState.getString(cServerName);
             mTreshold = savedInstanceState.getInt(cTreshold);
-            mMax = savedInstanceState.getInt(cMax);
             mInterval = savedInstanceState.getInt(cInterval);
             mRepeat = savedInstanceState.getInt(cRepeat);
         }
         sFillScreen();
         mServer = mData.xServer(mServerName);
-
-        if (mServer != null){
-            new GetSensor(this).execute();
-        }
     }
 
     @Override
@@ -87,9 +113,9 @@ public class ModifySensor extends Activity {
         super.onSaveInstanceState(savedInstanceState);
 
         sReadScreen();
+        savedInstanceState.putString(cSetting, mSetting.xSetting().toString());
         savedInstanceState.putString(cServerName, mServerName);
         savedInstanceState.putInt(cTreshold, mTreshold);
-        savedInstanceState.putInt(cMax, mMax);
         savedInstanceState.putInt(cInterval, mInterval);
         savedInstanceState.putInt(cRepeat, mRepeat);
     }
@@ -112,181 +138,87 @@ public class ModifySensor extends Activity {
     private  void sReadScreen(){
         try {
             mTreshold = Integer.parseInt(mEdtTreshold.getText().toString());
-            mMax = Integer.parseInt(mEdtMax.getText().toString());
             mInterval = Integer.parseInt(mEdtInterval.getText().toString());
             mRepeat = Integer.parseInt(mEdtRepeat.getText().toString());
         } catch (NumberFormatException pExc){
-            mTreshold = 0;
-            mMax = 0;
-            mInterval = 0;
-            mRepeat = 0;
         }
     }
 
-    private void sProcessResponse(int pStatus, String pMessage, JSONObject pResult, boolean pMessageOK){
-        Setting lSetting;
+    private boolean sCheckScreen(){
+        boolean lResult;
+        int lTreshold = 0;
+        int lInterval = 0;
+        int lRepeat = 0;
 
-        switch (pStatus){
-            case Result.cResultOK:
-                lSetting = new Setting(pResult);
-
-                mTreshold = lSetting.xSensorLimit();
-                mMax = lSetting.xMaxSensor();
-                mInterval = lSetting.xPeriodSec();
-                mRepeat = lSetting.xPeriodDark();
-                sFillScreen();
-                if (pMessageOK){
-                    Toast.makeText(mContext, pMessage, Toast.LENGTH_SHORT).show();
-                }
-                break;
-            case Result.cResultConnectTimeOut:
-                Toast.makeText(mContext, "Connect Time-Out", Toast.LENGTH_SHORT).show();
-                break;
-            case Result.cResultReadTimeOut:
-                Toast.makeText(mContext, "Read Time-Out", Toast.LENGTH_SHORT).show();
-                break;
-            default:
-                Toast.makeText(mContext, pMessage, Toast.LENGTH_SHORT).show();
-                break;
+        lResult = true;
+        try {
+            lTreshold = Integer.parseInt(mEdtTreshold.getText().toString());
+        } catch (NumberFormatException pExc){
+            Toast.makeText(mContext, getString(R.string.msg_treshold_format), Toast.LENGTH_SHORT).show();
+            lResult = false;
         }
+        if (lResult){
+            if (lTreshold < 0 || lTreshold > 10000){
+                Toast.makeText(mContext, getString(R.string.msg_treshold_range), Toast.LENGTH_SHORT).show();
+                lResult = false;
+            } else {
+                try {
+                    lInterval = Integer.parseInt(mEdtInterval.getText().toString());
+                } catch (NumberFormatException pExc){
+                    Toast.makeText(mContext, getString(R.string.msg_interval_format), Toast.LENGTH_SHORT).show();
+                    lResult = false;
+                }
+                if (lResult){
+                    if (lInterval < 10 || lInterval > 300){
+                        Toast.makeText(mContext, getString(R.string.msg_interval_range), Toast.LENGTH_SHORT).show();
+                        lResult = false;
+                    } else {
+                        try {
+                            lRepeat = Integer.parseInt(mEdtRepeat.getText().toString());
+                        } catch (NumberFormatException pExc){
+                            Toast.makeText(mContext, getString(R.string.msg_repeat_format), Toast.LENGTH_SHORT).show();
+                            lResult = false;
+                        }
+                        if (lResult) {
+                            if (lRepeat < 0 || lRepeat > 10) {
+                                Toast.makeText(mContext, getString(R.string.msg_repeat_range), Toast.LENGTH_SHORT).show();
+                                lResult = false;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return lResult;
     }
 
     private void sFillScreen(){
         mEdtTreshold.setText(String.valueOf(mTreshold));
-        mEdtMax.setText(String.valueOf(mMax));
         mEdtInterval.setText(String.valueOf(mInterval));
         mEdtRepeat.setText(String.valueOf(mRepeat));
     }
 
     public void sProcess(MenuItem pMenu){
-        sReadScreen();
-        new SetSensor(this).execute();
+        PutSettingRunnable lRunnable;
+
+        if (sCheckScreen()){
+            sReadScreen();
+            mSetting.xSensorLimit(mTreshold);
+            mSetting.xPeriodSec(mInterval);
+            mSetting.xPeriodDark(mRepeat);
+            lRunnable = new PutSettingRunnable(mServer.xAddress(), mSetting, mUpdateHandler, PutSettingRunnable.cSaveSensor);
+            LightControlApp.getInstance().xExecutor.execute(lRunnable);
+        }
     }
 
     public void sRefresh(MenuItem pMenu){
-
+        mTreshold = mSetting.xSensorLimit();
+        mInterval = mSetting.xPeriodSec();
+        mRepeat = mSetting.xPeriodDark();
+        sFillScreen();
     }
 
     public void sDelete(MenuItem pMenu){
 
-    }
-
-    private static class GetSensor extends AsyncTask<Void, Void, RestAPI.RestResult> {
-        private WeakReference<ModifySensor> mRefMain;
-
-        private GetSensor(ModifySensor pMain){
-            mRefMain = new WeakReference<>(pMain);
-        }
-
-        @Override
-        protected RestAPI.RestResult doInBackground(Void... params) {
-            ModifySensor lMain;
-            String lRequest;
-            RestAPI.RestResult lOutput;
-            RestAPI lRestAPI;
-
-            lMain = mRefMain.get();
-            if (lMain == null){
-                return null;
-            } else {
-                lRequest = lMain.mServer.xAddress() + URIs.UriServerSetting;
-                lRestAPI = new RestAPI();
-                lRestAPI.xMethod(RestAPI.cMethodGet);
-                lRestAPI.xMediaRequest(RestAPI.cMediaText);
-                lRestAPI.xMediaReply(RestAPI.cMediaJSON);
-                lRestAPI.xUrl(lRequest);
-                lRestAPI.xAction("");
-                lOutput = lRestAPI.xCallApi();
-                return lOutput;
-            }
-        }
-
-        protected void onPostExecute(RestAPI.RestResult pOutput) {
-            ModifySensor lMain;
-
-            if (pOutput != null){
-                lMain = mRefMain.get();
-                if (lMain != null){
-                    lMain.sProcessResponse(pOutput.xResult(), pOutput.xText(), pOutput.xReplyJ(), false);
-                }
-            }
-        }
-    }
-
-    private static class SetSensor extends AsyncTask<Void, Void, RestAPI.RestResult> {
-        private WeakReference<ModifySensor> mRefMain;
-
-        private SetSensor(ModifySensor pMain){
-            mRefMain = new WeakReference<>(pMain);
-        }
-
-        @Override
-        protected RestAPI.RestResult doInBackground(Void... params) {
-            ModifySensor lMain;
-            String lRequest;
-            RestAPI.RestResult lOutput;
-            RestAPI lRestAPI;
-            JSONObject lSensor;
-            JSONObject lAction;
-            String lActionS;
-
-            lMain = mRefMain.get();
-            if (lMain == null){
-                return null;
-            } else {
-                lSensor = new JSONObject();
-                lAction = new JSONObject();
-                try {
-                    lSensor.put(Setting.cLimit, String.valueOf(lMain.mTreshold));
-                    lSensor.put(Setting.cMax, String.valueOf(lMain.mMax));
-                    lSensor.put(Setting.cInterval, String.valueOf(lMain.mInterval));
-                    lSensor.put(Setting.cRepeat, String.valueOf(lMain.mRepeat));
-                    lAction.put(Setting.cSensor, lSensor);
-                    lAction.put("lang", Locale.getDefault().getLanguage());
-                    lActionS = lAction.toString();
-                } catch (JSONException pExc){
-                    lActionS = "";
-                }
-
-                lRequest = lMain.mServer.xAddress() + URIs.UriServerSetting;
-                lRestAPI = new RestAPI();
-                lRestAPI.xMethod(RestAPI.cMethodPut);
-                lRestAPI.xMediaRequest(RestAPI.cMediaJSON);
-                lRestAPI.xMediaReply(RestAPI.cMediaJSON);
-                lRestAPI.xUrl(lRequest);
-                lRestAPI.xAction(lActionS);
-                lOutput = lRestAPI.xCallApi();
-                return lOutput;
-            }
-        }
-
-        protected void onPostExecute(RestAPI.RestResult pOutput) {
-            ModifySensor lMain;
-            String lText;
-            JSONObject lResult;
-            JSONObject lSettingJ;
-            int lStatus;
-            final String cError = "Invalid reply!";
-
-            if (pOutput != null){
-                lMain = mRefMain.get();
-                if (lMain != null){
-                    if (pOutput.xResult() == Result.cResultOK){
-                        lResult = pOutput.xReplyJ();
-                        lText = lResult.optString("descr", cError);
-                        if (lText.equals(cError)){
-                            lStatus = Result.cResultJSONError;
-                            lSettingJ = null;
-                        } else {
-                            lStatus = Result.cResultOK;
-                            lSettingJ = lResult.optJSONObject(Setting.cSetting);
-                        }
-                        lMain.sProcessResponse(lStatus, lText, lSettingJ, true);
-                    } else {
-                        lMain.sProcessResponse(pOutput.xResult(), pOutput.xText(), null, false);
-                    }
-                }
-            }
-        }
     }
 }

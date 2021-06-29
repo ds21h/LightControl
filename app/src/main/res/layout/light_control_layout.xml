@@ -58,9 +58,9 @@
         </LinearLayout>
 
         <LinearLayout
-            android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
             <TextView
                 android:id="@+id/lbLightOff"
@@ -74,13 +74,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:clickable="true"
                 android:enabled="true"
-                android:nestedScrollingEnabled="false"
-                android:onClick="sSetTimeLightOff"
                 android:paddingStart="10dp"
                 android:text="23:30"
                 android:textAppearance="?android:attr/textAppearanceMedium" />
+
         </LinearLayout>
 
         <CheckBox
@@ -88,7 +86,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:onClick="sSelectAll"
             android:text="@string/chk_selall" />
 
         <ListView
@@ -110,7 +107,6 @@
                 android:id="@+id/ibtnSelectOn"
                 android:longClickable="false"
                 android:src="@mipmap/light_on"
-                android:onClick="sSelectOn"
                 android:layout_weight="1" />
 
             <ImageButton
@@ -118,7 +114,6 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/ibtnSelectOff"
                 android:src="@mipmap/light_off"
-                android:onClick="sSelectOff"
                 android:layout_weight="1" />
         </LinearLayout>
     </LinearLayout>

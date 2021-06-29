@@ -8,49 +8,59 @@
   <component name="AndroidLogFilters">
     <option name="TOOL_WINDOW_CONFIGURED_FILTER" value="No Filters" />
   </component>
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="NONE" />
+  </component>
+  <component name="BranchesTreeState">
+    <expand>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="LOCAL_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="GROUP_NODE:origin" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+    </expand>
+    <select />
+  </component>
   <component name="CMakeSettings">
     <configurations>
       <configuration PROFILE_NAME="Debug" CONFIG_NAME="Debug" />
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b4644a55-f30a-4504-b56f-f83c0116d1f2" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/codeStyles/Project.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/jarRepositories.xml" afterDir="false" />
+    <list default="true" id="b4644a55-f30a-4504-b56f-f83c0116d1f2" name="Default" comment="Version 3.1.2">
+      <change afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/jb/light/control/ControlRunnable.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/jb/light/control/GetSettingRunnable.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/jb/light/control/LightControlApp.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/jb/light/control/PutSettingRunnable.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/jb/light/control/ResStatus.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/jb/light/control/ServerActionRunnable.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/jb/light/control/SwitchRunnable.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/cache.properties" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/cache.properties" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/caches/build_file_checksums.ser" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/caches/build_file_checksums.ser" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Gradle__android_arch_core_common_1_1_0_jar.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Gradle__android_arch_core_runtime_1_1_0.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Gradle__android_arch_lifecycle_common_1_1_0_jar.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Gradle__android_arch_lifecycle_livedata_core_1_1_0.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Gradle__android_arch_lifecycle_runtime_1_1_0.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Gradle__android_arch_lifecycle_viewmodel_1_1_0.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Gradle__com_android_support_animated_vector_drawable_27_1_1.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Gradle__com_android_support_appcompat_v7_27_1_1.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Gradle__com_android_support_constraint_constraint_layout_1_1_3.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Gradle__com_android_support_constraint_constraint_layout_solver_1_1_3_jar.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Gradle__com_android_support_design_27_1_1.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Gradle__com_android_support_recyclerview_v7_27_1_1.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Gradle__com_android_support_support_annotations_27_1_1_jar.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Gradle__com_android_support_support_compat_27_1_1.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Gradle__com_android_support_support_core_ui_27_1_1.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Gradle__com_android_support_support_core_utils_27_1_1.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Gradle__com_android_support_support_fragment_27_1_1.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Gradle__com_android_support_support_media_compat_27_1_1.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Gradle__com_android_support_support_v4_27_1_1.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Gradle__com_android_support_support_vector_drawable_27_1_1.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Gradle__com_android_support_transition_27_1_1.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/jarRepositories.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/jarRepositories.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/runConfigurations.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/LightControl.iml" beforeDir="false" afterPath="$PROJECT_DIR$/LightControl.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/app.iml" beforeDir="false" afterPath="$PROJECT_DIR$/app/app.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app.iml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/app/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/app/build.gradle" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/jb/light/control/Action.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/jb/light/control/Action.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/jb/light/control/Data.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/jb/light/control/Data.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/jb/light/control/History.txt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/jb/light/control/History.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/jb/light/control/LightControl.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/jb/light/control/LightControl.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/jb/light/control/MainSwitchListAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/jb/light/control/MainSwitchListAdapter.java" afterDir="false" />
@@ -61,24 +71,31 @@
       <change beforePath="$PROJECT_DIR$/app/src/main/java/jb/light/control/ModifyLightOff.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/jb/light/control/ModifyLightOff.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/jb/light/control/ModifyLocation.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/jb/light/control/ModifyLocation.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/jb/light/control/ModifySensor.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/jb/light/control/ModifySensor.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/jb/light/control/ModifyServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/jb/light/control/ModifyServer.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/jb/light/control/ModifySwitch.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/jb/light/control/ModifySwitch.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/jb/light/control/SelectServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/jb/light/control/SelectServer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/jb/light/control/ServerListAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/jb/light/control/ServerListAdapter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/jb/light/control/Setting.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/jb/light/control/Setting.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/jb/light/control/SettingListAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/jb/light/control/SettingListAdapter.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/jb/light/control/SwitchX.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/jb/light/control/SwitchX.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/jb/light/control/Switch.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/jb/light/control/Switch.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/jb/light/control/SwitchX.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/jb/light/control/SwitchLocal.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/light_control_layout.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/light_control_layout.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/manage_server_list_item.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/manage_server_list_item.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/manage_servers_layout.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/manage_servers_layout.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/manage_setting_list_item.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/manage_setting_list_item.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/manage_switch_list_item.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/manage_switch_list_item.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/modify_light_off_layout.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/modify_light_off_layout.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/modify_sensor_layout.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/modify_sensor_layout.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/modify_switch_layout.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/modify_switch_layout.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/values-nl-rNL/strings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/values-nl-rNL/strings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/values/strings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/values/strings.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/intermediates/lint-cache/maven.google/master-index.xml" beforeDir="false" afterPath="$PROJECT_DIR$/build/intermediates/lint-cache/maven.google/master-index.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/intermediates/lint-cache/sdk-registry.xml/sdk-registry.xml" beforeDir="false" afterPath="$PROJECT_DIR$/build/intermediates/lint-cache/sdk-registry.xml/sdk-registry.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gradle.properties" beforeDir="false" afterPath="$PROJECT_DIR$/gradle.properties" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/gradle/wrapper/gradle-wrapper.properties" beforeDir="false" afterPath="$PROJECT_DIR$/gradle/wrapper/gradle-wrapper.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/local.properties" beforeDir="false" afterPath="$PROJECT_DIR$/local.properties" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="Pixel_2_API_28" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[VirtualDevicePath@C:\Users\ds21h\.android\avd\Pixel_4_API_29_Android_10_.avd]" />
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
       <ProjectState />
@@ -90,6 +107,13 @@
         <projects_view />
       </state>
     </system>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
   </component>
   <component name="GenerateSignedApkSettings">
     <option name="KEY_STORE_PATH" value="D:\Source\AndroidStudio\AndroidKeyStore.jks" />
@@ -113,7 +137,6 @@
   <component name="ProjectId" id="1iabOqW0RKdHZbr7WYPlncbjZOn" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
-    <option name="showExcludedFiles" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
@@ -127,12 +150,15 @@
     <property name="ExportApk.Flavors" value="" />
     <property name="ExportApk.SignV1" value="true" />
     <property name="ExportApk.SignV2" value="true" />
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="SHOW_ALL_PROCESSES" value="false" />
-    <property name="android.sdk.path" value="D:/ProgData/Android/SDK" />
+    <property name="android-custom-viewC:/Users/ds21h/AppData/Local/Android/Sdk/sources/android-30/android/widget/ListView.java_SELECTED" value="ListView" />
+    <property name="android.sdk.path" value="$PROJECT_DIR$/../../../ProgData/Android/SDK" />
     <property name="device.picker.selection" value="7354d8bb" />
     <property name="ignore.virus.scanning.warn.message" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/.." />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="settings.editor.selected.configurable" value="reference.settingsdialog.project.gradle" />
   </component>
   <component name="RunManager">
@@ -174,12 +200,14 @@
       </method>
     </configuration>
     <configuration name="app" type="AndroidRunConfigurationType" factoryName="Android App" activateToolWindowBeforeRun="false">
-      <module name="app" />
+      <module name="LightControl.app" />
       <option name="DEPLOY" value="true" />
       <option name="DEPLOY_APK_FROM_BUNDLE" value="false" />
       <option name="DEPLOY_AS_INSTANT" value="false" />
       <option name="ARTIFACT_NAME" value="" />
       <option name="PM_INSTALL_OPTIONS" value="" />
+      <option name="ALL_USERS" value="false" />
+      <option name="ALWAYS_INSTALL_WITH_PM" value="false" />
       <option name="DYNAMIC_FEATURES_DISABLED_LIST" value="" />
       <option name="ACTIVITY_EXTRA_FLAGS" value="" />
       <option name="MODE" value="default_activity" />
@@ -215,11 +243,16 @@
       </Native>
       <Profilers>
         <option name="ADVANCED_PROFILING_ENABLED" value="false" />
+        <option name="STARTUP_PROFILING_ENABLED" value="false" />
         <option name="STARTUP_CPU_PROFILING_ENABLED" value="false" />
         <option name="STARTUP_CPU_PROFILING_CONFIGURATION_NAME" value="Sampled (Java)" />
+        <option name="STARTUP_NATIVE_MEMORY_PROFILING_ENABLED" value="false" />
+        <option name="NATIVE_MEMORY_SAMPLE_RATE_BYTES" value="2048" />
       </Profilers>
       <option name="DEEP_LINK" value="" />
       <option name="ACTIVITY_CLASS" value="" />
+      <option name="SEARCH_ACTIVITY_IN_GLOBAL_SCOPE" value="false" />
+      <option name="SKIP_ACTIVITY_VALIDATION" value="false" />
       <method v="2">
         <option name="Android.Gradle.BeforeRunTask" enabled="true" />
       </method>
@@ -240,6 +273,7 @@
       </method>
     </configuration>
   </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="SvnConfiguration">
     <configuration />
   </component>
@@ -258,82 +292,116 @@
       <option name="project" value="LOCAL" />
       <updated>1547396074423</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Version 3.1.2">
+      <created>1602161370530</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1602161370530</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
-  <component name="TodoView">
-    <todo-panel id="selected-file">
-      <is-autoscroll-to-source value="true" />
-    </todo-panel>
-    <todo-panel id="all">
-      <are-packages-shown value="true" />
-      <is-autoscroll-to-source value="true" />
-    </todo-panel>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT" value="true" />
     <option name="CHECK_NEW_TODO" value="false" />
     <MESSAGE value="Version 3.1" />
-    <option name="LAST_COMMIT_MESSAGE" value="Version 3.1" />
+    <MESSAGE value="Version 3.1.2" />
+    <option name="LAST_COMMIT_MESSAGE" value="Version 3.1.2" />
   </component>
   <component name="WindowStateProjectService">
-    <state x="655" y="200" key="AndroidProcessChooserDialog" timestamp="1602153142691">
-      <screen x="0" y="0" width="1600" height="870" />
+    <state x="765" y="231" key="#com.intellij.ide.util.MemberChooser" timestamp="1624799423356">
+      <screen x="0" y="0" width="1920" height="1050" />
     </state>
-    <state x="655" y="200" key="AndroidProcessChooserDialog/0.0.1600.870@0.0.1600.870" timestamp="1602153142691" />
-    <state x="464" y="29" key="CommitChangelistDialog2" timestamp="1602161276839">
-      <screen x="0" y="0" width="1600" height="870" />
+    <state x="765" y="231" key="#com.intellij.ide.util.MemberChooser/0.0.1920.1050@0.0.1920.1050" timestamp="1624799423356" />
+    <state x="493" y="0" key="#com.intellij.refactoring.rename.AutomaticRenamingDialog" timestamp="1624891301983">
+      <screen x="0" y="0" width="1920" height="1050" />
     </state>
-    <state x="464" y="29" key="CommitChangelistDialog2/0.0.1600.870@0.0.1600.870" timestamp="1602161276839" />
-    <state x="580" y="161" key="FileChooserDialogImpl" timestamp="1602149048036">
-      <screen x="0" y="0" width="1600" height="870" />
+    <state x="493" y="0" key="#com.intellij.refactoring.rename.AutomaticRenamingDialog/0.0.1920.1050@0.0.1920.1050" timestamp="1624891301983" />
+    <state x="690" y="271" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog" timestamp="1624189720414">
+      <screen x="0" y="0" width="1920" height="1050" />
     </state>
-    <state x="580" y="161" key="FileChooserDialogImpl/0.0.1600.870@0.0.1600.870" timestamp="1602149048036" />
-    <state width="1601" height="279" key="GridCell.Tab.0.bottom" timestamp="1602153279486">
-      <screen x="0" y="0" width="1600" height="870" />
+    <state x="690" y="271" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1920.1050@0.0.1920.1050" timestamp="1624189720414" />
+    <state x="92" y="92" width="1736" height="866" key="AVDManager" timestamp="1623511450443">
+      <screen x="0" y="0" width="1920" height="1050" />
     </state>
-    <state width="1601" height="279" key="GridCell.Tab.0.bottom/0.0.1600.870@0.0.1600.870" timestamp="1602153279486" />
-    <state width="1601" height="279" key="GridCell.Tab.0.center" timestamp="1602153279485">
-      <screen x="0" y="0" width="1600" height="870" />
+    <state x="92" y="92" width="1736" height="866" key="AVDManager/0.0.1920.1050@0.0.1920.1050" timestamp="1623511450443" />
+    <state width="1877" height="285" key="GridCell.Tab.0.bottom" timestamp="1624890315660">
+      <screen x="0" y="0" width="1920" height="1050" />
     </state>
-    <state width="1601" height="279" key="GridCell.Tab.0.center/0.0.1600.870@0.0.1600.870" timestamp="1602153279485" />
-    <state width="1601" height="279" key="GridCell.Tab.0.left" timestamp="1602153279485">
-      <screen x="0" y="0" width="1600" height="870" />
+    <state width="1877" height="285" key="GridCell.Tab.0.bottom/0.0.1920.1050@0.0.1920.1050" timestamp="1624890315660" />
+    <state width="1877" height="285" key="GridCell.Tab.0.center" timestamp="1624890315660">
+      <screen x="0" y="0" width="1920" height="1050" />
     </state>
-    <state width="1601" height="279" key="GridCell.Tab.0.left/0.0.1600.870@0.0.1600.870" timestamp="1602153279485" />
-    <state width="1601" height="279" key="GridCell.Tab.0.right" timestamp="1602153279486">
-      <screen x="0" y="0" width="1600" height="870" />
+    <state width="1877" height="285" key="GridCell.Tab.0.center/0.0.1920.1050@0.0.1920.1050" timestamp="1624890315660" />
+    <state width="1877" height="285" key="GridCell.Tab.0.left" timestamp="1624890315660">
+      <screen x="0" y="0" width="1920" height="1050" />
     </state>
-    <state width="1601" height="279" key="GridCell.Tab.0.right/0.0.1600.870@0.0.1600.870" timestamp="1602153279486" />
-    <state width="1601" height="279" key="GridCell.Tab.1.bottom" timestamp="1602153279486">
-      <screen x="0" y="0" width="1600" height="870" />
+    <state width="1877" height="285" key="GridCell.Tab.0.left/0.0.1920.1050@0.0.1920.1050" timestamp="1624890315660" />
+    <state width="1877" height="285" key="GridCell.Tab.0.right" timestamp="1624890315660">
+      <screen x="0" y="0" width="1920" height="1050" />
     </state>
-    <state width="1601" height="279" key="GridCell.Tab.1.bottom/0.0.1600.870@0.0.1600.870" timestamp="1602153279486" />
-    <state width="1601" height="279" key="GridCell.Tab.1.center" timestamp="1602153279486">
-      <screen x="0" y="0" width="1600" height="870" />
+    <state width="1877" height="285" key="GridCell.Tab.0.right/0.0.1920.1050@0.0.1920.1050" timestamp="1624890315660" />
+    <state width="1877" height="285" key="GridCell.Tab.1.bottom" timestamp="1624890315661">
+      <screen x="0" y="0" width="1920" height="1050" />
     </state>
-    <state width="1601" height="279" key="GridCell.Tab.1.center/0.0.1600.870@0.0.1600.870" timestamp="1602153279486" />
-    <state width="1601" height="279" key="GridCell.Tab.1.left" timestamp="1602153279486">
-      <screen x="0" y="0" width="1600" height="870" />
+    <state width="1877" height="285" key="GridCell.Tab.1.bottom/0.0.1920.1050@0.0.1920.1050" timestamp="1624890315661" />
+    <state width="1877" height="285" key="GridCell.Tab.1.center" timestamp="1624890315660">
+      <screen x="0" y="0" width="1920" height="1050" />
     </state>
-    <state width="1601" height="279" key="GridCell.Tab.1.left/0.0.1600.870@0.0.1600.870" timestamp="1602153279486" />
-    <state width="1601" height="279" key="GridCell.Tab.1.right" timestamp="1602153279486">
-      <screen x="0" y="0" width="1600" height="870" />
+    <state width="1877" height="285" key="GridCell.Tab.1.center/0.0.1920.1050@0.0.1920.1050" timestamp="1624890315660" />
+    <state width="1877" height="285" key="GridCell.Tab.1.left" timestamp="1624890315660">
+      <screen x="0" y="0" width="1920" height="1050" />
     </state>
-    <state width="1601" height="279" key="GridCell.Tab.1.right/0.0.1600.870@0.0.1600.870" timestamp="1602153279486" />
-    <state width="300" height="87" key="javadoc.popup.new" timestamp="1602152958320">
-      <screen x="0" y="0" width="1600" height="870" />
+    <state width="1877" height="285" key="GridCell.Tab.1.left/0.0.1920.1050@0.0.1920.1050" timestamp="1624890315660" />
+    <state width="1877" height="285" key="GridCell.Tab.1.right" timestamp="1624890315661">
+      <screen x="0" y="0" width="1920" height="1050" />
     </state>
-    <state width="300" height="87" key="javadoc.popup.new/0.0.1600.870@0.0.1600.870" timestamp="1602152958320" />
+    <state width="1877" height="285" key="GridCell.Tab.1.right/0.0.1920.1050@0.0.1920.1050" timestamp="1624890315661" />
+    <state x="706" y="227" key="RollbackChangesDialog" timestamp="1623758056497">
+      <screen x="0" y="0" width="1920" height="1050" />
+    </state>
+    <state x="706" y="227" key="RollbackChangesDialog/0.0.1920.1050@0.0.1920.1050" timestamp="1623758056497" />
+    <state width="968" height="533" key="XDebugger.FullValuePopup" timestamp="1624887143285">
+      <screen x="0" y="0" width="1920" height="1050" />
+    </state>
+    <state width="968" height="533" key="XDebugger.FullValuePopup/0.0.1920.1050@0.0.1920.1050" timestamp="1624887143285" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="java-line">
           <url>file://$PROJECT_DIR$/app/src/main/java/jb/light/control/LightControl.java</url>
-          <line>235</line>
-          <option name="timeStamp" value="1" />
+          <line>452</line>
+          <option name="timeStamp" value="4" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="java-line">
+          <url>file://$PROJECT_DIR$/app/src/main/java/jb/light/control/ManageServers.java</url>
+          <line>43</line>
+          <option name="timeStamp" value="5" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="java-line">
+          <url>file://$PROJECT_DIR$/app/src/main/java/jb/light/control/ManageServers.java</url>
+          <line>32</line>
+          <option name="timeStamp" value="6" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="java-line">
+          <url>file://$PROJECT_DIR$/app/src/main/java/jb/light/control/PutSettingRunnable.java</url>
+          <line>42</line>
+          <option name="timeStamp" value="8" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

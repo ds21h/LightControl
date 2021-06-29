@@ -36,8 +36,16 @@ Version 3.1.1 - 09-06-2019
     -   Updated status inquiry protocol. IO errors now result in status 'unknown'
 
 Version 3.1.2 - 08-10-2020
-    -   Upgraded to API 30 (Android 10)
+    -   Upgraded to API 30 (Android 11)
     -   Minimum API changed to 19 (Android 4.4)
     -   Converted to AndroidX
     -   usesCleartextTraffic added in manifest
     -   permission changed from CoarseLocation to FineLocation
+
+Version 3.2 - 29-06-2021
+    -   Deleted support of obsolete attributes:
+        Switch: Type, Group and Point
+        Setting: MaxSensor
+    -   Deleted AsyncTask implementations (declared obsolete). Now using threadpool on application-level.
+    -   Switch inquiries now parallel, so better response time overall.
+    -   Moved OnClick listener declarations from layout to code.

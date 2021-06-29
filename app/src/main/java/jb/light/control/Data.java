@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,17 +18,26 @@ class Data extends SQLiteOpenHelper {
     private static Data mInstance = null;
 
     private static final String cDBName = "LightControl.db";
-    private static final int cDBVersion = 1;
+    private static final int cDBVersion = 2;
+    private static String mExternalFilesDir;
 
     static Data getInstance(Context pContext) {
-        /*
-         * use the application context as suggested by CommonsWare.
-         * this will ensure that you dont accidentally leak an Activitys
-         * context (see this article for more information:
-         * http://developer.android.com/resources/articles/avoiding-memory-leaks.html)
-         */
+        Context lContext;
+        File lExternalFilesDir;
+
         if (mInstance == null) {
-            mInstance = new Data(pContext.getApplicationContext());
+            synchronized (Data.class) {
+                if (mInstance == null) {
+                    lContext = pContext.getApplicationContext();
+                    lExternalFilesDir = lContext.getExternalFilesDir(null);
+                    if (lExternalFilesDir == null) {
+                        mExternalFilesDir = "";
+                    } else {
+                        mExternalFilesDir = lExternalFilesDir.getAbsolutePath();
+                    }
+                    mInstance = new Data(lContext);
+                }
+            }
         }
         return mInstance;
     }
@@ -37,7 +47,7 @@ class Data extends SQLiteOpenHelper {
      * make call to static factory method "getInstance()" instead.
      */
     private Data(Context pContext) {
-        super(pContext, pContext.getExternalFilesDir(null).getAbsolutePath() + "/" + cDBName, null, cDBVersion);
+        super(pContext, mExternalFilesDir + "/" + cDBName, null, cDBVersion);
     }
 
     @Override
@@ -49,6 +59,10 @@ class Data extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase pDB, int pOldVersion, int pNewVersion) {
         switch (pOldVersion){
+            case 1:{
+                sUpgradeSwitch1_2(pDB);
+                break;
+            }
             default:{
                 pDB.execSQL("DROP TABLE IF EXISTS Server");
                 pDB.execSQL("DROP TABLE IF EXISTS Switch");
@@ -70,6 +84,39 @@ class Data extends SQLiteOpenHelper {
         );
     }
 
+    private void sUpgradeSwitch1_2(SQLiteDatabase pDB){
+        pDB.execSQL(
+                "CREATE TABLE Switch_temp AS SELECT * " +
+                        "FROM Switch"
+        );
+        pDB.execSQL(
+                "DROP TABLE Switch"
+        );
+        sDefineSwitch(pDB);
+        pDB.execSQL(
+                "INSERT INTO Switch (" +
+                        "_ID, " +
+                        "Server, " +
+                        "SeqNumber, " +
+                        "Name, " +
+                        "Active, " +
+                        "IP, " +
+                        "Pause" +
+                ") " +
+                "SELECT _ID, " +
+                "Server, " +
+                "SeqNumber, " +
+                "Name, " +
+                "Active, " +
+                "IP, " +
+                "Pause " +
+                "FROM Switch_temp"
+        );
+        pDB.execSQL(
+                "DROP TABLE Switch_temp"
+        );
+    }
+
     private void sDefineSwitch(SQLiteDatabase pDB){
         pDB.execSQL(
                 "CREATE TABLE Switch " +
@@ -78,9 +125,6 @@ class Data extends SQLiteOpenHelper {
                         "SeqNumber Integer, " +
                         "Name Text Not Null, " +
                         "Active Integer Not Null, " +
-                        "Type Text Not Null, " +
-                        "Grp Text, " +
-                        "Point Text, " +
                         "IP Text, " +
                         "Pause Integer Not Null" +
                         ")"
@@ -272,9 +316,9 @@ class Data extends SQLiteOpenHelper {
         return  lResult;
     }
 
-    List<Switch> xSwitches(String pServer){
-        List<Switch> lSwitches;
-        Switch lSwitch;
+    List<SwitchLocal> xSwitches(String pServer){
+        List<SwitchLocal> lSwitches;
+        SwitchLocal lSwitch;
         SQLiteDatabase lDB;
         Cursor lCursor;
         String[] lColumns;
@@ -284,13 +328,10 @@ class Data extends SQLiteOpenHelper {
         int lSeqNumber;
         String lName;
         int lActive;
-        String lType;
-        String lGroup;
-        String lPoint;
         String lIP;
         int lPause;
 
-        lColumns = new String[] {"SeqNumber", "Name", "Active", "Type", "Grp", "Point", "IP", "Pause"};
+        lColumns = new String[] {"SeqNumber", "Name", "Active", "IP", "Pause"};
         lSelection = "Server = ?";
         lSelectionArgs = new String[] {pServer};
         lSequence = "SeqNumber, Name";
@@ -308,12 +349,9 @@ class Data extends SQLiteOpenHelper {
             }
             lName = lCursor.getString(1);
             lActive = lCursor.getInt(2);
-            lType = lCursor.getString(3);
-            lGroup = lCursor.getString(4);
-            lPoint = lCursor.getString(5);
-            lIP = lCursor.getString(6);
-            lPause = lCursor.getInt(7);
-            lSwitch = new Switch(lSeqNumber, lName, lActive != 0, lType, lGroup, lPoint, lPause, lIP);
+            lIP = lCursor.getString(3);
+            lPause = lCursor.getInt(4);
+            lSwitch = new SwitchLocal(lSeqNumber, lName, lActive != 0, lPause, lIP);
             lSwitches.add(lSwitch);
         }
         lCursor.close();
@@ -322,8 +360,8 @@ class Data extends SQLiteOpenHelper {
         return lSwitches;
     }
 
-    Switch xSwitch(String pServer, String pName){
-        Switch lSwitch = null;
+    SwitchLocal xSwitch(String pServer, String pName){
+        SwitchLocal lSwitch = null;
         SQLiteDatabase lDB;
         Cursor lCursor;
         String[] lColumns;
@@ -332,13 +370,10 @@ class Data extends SQLiteOpenHelper {
         int lSeqNumber;
         String lName;
         int lActive;
-        String lType;
-        String lGroup;
-        String lPoint;
         String lIP;
         int lPause;
 
-        lColumns = new String[] {"SeqNumber", "Name", "Active", "Type", "Grp", "Point", "IP", "Pause"};
+        lColumns = new String[] {"SeqNumber", "Name", "Active", "IP", "Pause"};
         lSelection = "Server = ? AND Name = ?";
         lSelectionArgs = new String[] {pServer, pName};
 
@@ -353,12 +388,9 @@ class Data extends SQLiteOpenHelper {
             }
             lName = lCursor.getString(1);
             lActive = lCursor.getInt(2);
-            lType = lCursor.getString(3);
-            lGroup = lCursor.getString(4);
-            lPoint = lCursor.getString(5);
-            lIP = lCursor.getString(6);
-            lPause = lCursor.getInt(7);
-            lSwitch = new Switch(lSeqNumber, lName, lActive != 0, lType, lGroup, lPoint, lPause, lIP);
+            lIP = lCursor.getString(3);
+            lPause = lCursor.getInt(4);
+            lSwitch = new SwitchLocal(lSeqNumber, lName, lActive != 0, lPause, lIP);
         }
         lCursor.close();
         lDB.close();
@@ -366,8 +398,8 @@ class Data extends SQLiteOpenHelper {
         return lSwitch;
     }
 
-    boolean xSaveSwitches(List<Switch> pSwitches, String pServerName){
-        List<Switch> lSwitches;
+    boolean xSaveSwitches(List<SwitchLocal> pSwitches, String pServerName){
+        List<SwitchLocal> lSwitches;
         int lCountOld;
         int lCountNew;
         Switch lSwitchOld;
@@ -396,23 +428,25 @@ class Data extends SQLiteOpenHelper {
         }
 
         if (!lEqual){
-            sReplaceSwitches(pSwitches, pServerName);
+            xReplaceSwitches(pSwitches, pServerName);
         }
         return !lEqual;
     }
 
-    private int sReplaceSwitches(List<Switch> pSwitches, String pServer){
+    int xReplaceSwitches(List<SwitchLocal> pSwitches, String pServer){
         SQLiteDatabase lDB;
         String lSelection;
         String[] lSelectionArgs;
         int lCount;
-        Switch lSwitch;
+        SwitchLocal lSwitch;
         ContentValues lValues;
         long lRow;
         int lResult;
 
         lResult = Result.cResultOK;
         lDB = this.getWritableDatabase();
+        lDB.enableWriteAheadLogging();
+        lDB.beginTransaction();
 
         lSelection = "Server = ?";
         lSelectionArgs = new String[] {pServer};
@@ -426,9 +460,6 @@ class Data extends SQLiteOpenHelper {
             lValues.put("SeqNumber", lSwitch.xSeqNumber());
             lValues.put("Name", lSwitch.xName());
             lValues.put("Active", (lSwitch.xActive()) ? 1 : 0);
-            lValues.put("Type", lSwitch.xType());
-            lValues.put("Grp", lSwitch.xGroup());
-            lValues.put("Point", lSwitch.xPoint());
             lValues.put("IP", lSwitch.xIP());
             lValues.put("Pause", lSwitch.xPause());
             lRow = lDB.insert("Switch", null, lValues);
@@ -437,12 +468,13 @@ class Data extends SQLiteOpenHelper {
                 break;
             }
         }
+        lDB.endTransaction();
         lDB.close();
 
         return lResult;
     }
 
-    int xModifySwitch(Switch pSwitch, String pServerName){
+    int xModifySwitch(SwitchLocal pSwitch, String pServerName){
         SQLiteDatabase lDB;
         ContentValues lValues;
         String lSelection;
@@ -453,9 +485,6 @@ class Data extends SQLiteOpenHelper {
         lValues = new ContentValues();
         lValues.put("SeqNumber", pSwitch.xSeqNumber());
         lValues.put("Active", (pSwitch.xActive()) ? 1 : 0);
-        lValues.put("Type", pSwitch.xType());
-        lValues.put("Grp", pSwitch.xGroup());
-        lValues.put("Point", pSwitch.xPoint());
         lValues.put("IP", pSwitch.xIP());
         lValues.put("Pause", pSwitch.xPause());
         lSelection = "Server = ? AND Name = ?";
@@ -475,7 +504,7 @@ class Data extends SQLiteOpenHelper {
         return  lResult;
     }
 
-    int xNewSwitch(Switch pSwitch, String pServerName){
+    int xNewSwitch(SwitchLocal pSwitch, String pServerName){
         SQLiteDatabase lDB;
         ContentValues lValues;
         long lRow;
@@ -486,9 +515,6 @@ class Data extends SQLiteOpenHelper {
         lValues.put("SeqNumber", pSwitch.xSeqNumber());
         lValues.put("Name", pSwitch.xName());
         lValues.put("Active", (pSwitch.xActive()) ? 1 : 0);
-        lValues.put("Type", pSwitch.xType());
-        lValues.put("Grp", pSwitch.xGroup());
-        lValues.put("Point", pSwitch.xPoint());
         lValues.put("IP", pSwitch.xIP());
         lValues.put("Pause", pSwitch.xPause());
 

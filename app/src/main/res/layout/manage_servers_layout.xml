@@ -17,8 +17,6 @@
         android:id="@+id/ibtnNew"
         android:src="@mipmap/server_plus"
         android:layout_gravity="right"
-        android:onClick="sNewServer"
-        android:contentDescription="@string/title_newserver"
-        android:contextClickable="true" />
+        android:contentDescription="@string/title_newserver" />
 
 </LinearLayout>

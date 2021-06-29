@@ -15,12 +15,12 @@ import java.util.List;
 /**
  * Created by Jan on 18-9-2015.
  */
-public class MainSwitchListAdapter extends ArrayAdapter<Switch> {
-    private List<Switch> mSwitches;
-    private int mLayout;
-    private Context mContext;
+public class MainSwitchListAdapter extends ArrayAdapter<SwitchLocal> {
+    private final List<SwitchLocal> mSwitches;
+    private final int mLayout;
+    private final Context mContext;
 
-    MainSwitchListAdapter(Context pContext, int pLayout, List<Switch> pSwitches) {
+    MainSwitchListAdapter(Context pContext, int pLayout, List<SwitchLocal> pSwitches) {
         super(pContext, pLayout, pSwitches);
         mLayout = pLayout;
         mContext = pContext;
@@ -67,10 +67,24 @@ public class MainSwitchListAdapter extends ArrayAdapter<Switch> {
         pHandle.xTxtName.setText(pHandle.xSwitch.xName());
         lActive = pHandle.xSwitch.xActive();
         pHandle.xChkSelect.setEnabled(lActive);
+        switch (pHandle.xSwitch.xStatus()){
+            case SwitchLocal.StatusOn:{
+                pHandle.xImgStatus.setImageResource(R.mipmap.light_on);
+                break;
+            }
+            case SwitchLocal.StatusOff:{
+                pHandle.xImgStatus.setImageResource(R.mipmap.light_off);
+                break;
+            }
+            default:{
+                pHandle.xImgStatus.setImageResource(R.mipmap.question);
+                break;
+            }
+        }
     }
 
     static class SwitchItemHandle {
-        Switch xSwitch;
+        SwitchLocal xSwitch;
         CheckBox xChkSelect;
         TextView xTxtName;
         ImageView xImgStatus;

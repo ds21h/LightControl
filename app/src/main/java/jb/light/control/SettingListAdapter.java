@@ -15,9 +15,9 @@ import java.util.List;
  * Created by Jan on 28-11-2015.
  */
 public class SettingListAdapter extends ArrayAdapter<SettingItem> {
-    private List<SettingItem> mItems;
-    private int mLayout;
-    private Context mContext;
+    private final List<SettingItem> mItems;
+    private final int mLayout;
+    private final Context mContext;
 
     SettingListAdapter(Context pContext, int pLayout, List<SettingItem> pItems) {
         super(pContext, pLayout, pItems);
@@ -99,14 +99,12 @@ public class SettingListAdapter extends ArrayAdapter<SettingItem> {
                 pHandle.xTxtTitle.setText(R.string.title_lightsensor);
                 pHandle.xTxtAttr1Name.setText(R.string.lb_treshold);
                 pHandle.xTxtAttr1Value.setText(pHandle.xItem.xAttr1());
-                pHandle.xTxtAttr2Name.setText(R.string.lb_maximum);
+                pHandle.xTxtAttr2Name.setText(R.string.lb_interval);
                 pHandle.xTxtAttr2Value.setText(pHandle.xItem.xAttr2());
+                pHandle.xTxtAttr3Name.setText(R.string.lb_repeat);
                 pHandle.xLyoLine3.setLayoutParams(pHandle.xParShow);
-                pHandle.xLyoLine4.setLayoutParams(pHandle.xParShow);
-                pHandle.xTxtAttr3Name.setText(R.string.lb_interval);
                 pHandle.xTxtAttr3Value.setText(pHandle.xItem.xAttr3());
-                pHandle.xTxtAttr4Name.setText(R.string.lb_repeat);
-                pHandle.xTxtAttr4Value.setText(pHandle.xItem.xAttr4());
+                pHandle.xLyoLine4.setLayoutParams(pHandle.xParHide);
                 break;
             default:
                 pHandle.xTxtTitle.setText(R.string.title_unknown);

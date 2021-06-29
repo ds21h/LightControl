@@ -6,8 +6,13 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
+
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 import org.json.JSONException;
@@ -19,7 +24,8 @@ import java.util.Locale;
 public class ModifyLocation extends Activity {
     private final Context mContext = this;
 
-    public static final String cServerName = "ServerName";
+    static final String cSetting = "Setting";
+    static final String cServerName = "ServerName";
     private static final String cLongitude = "Longitude";
     private static final String cLattitude = "Lattitude";
 
@@ -27,12 +33,28 @@ public class ModifyLocation extends Activity {
 
     private Data mData;
     private Server mServer;
+    private Setting mSetting;
 
     private EditText mEdtLongitude;
     private EditText mEdtLattitude;
 
     private double mLongitude;
     private double mLattitude;
+
+    Handler mUpdateHandler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
+        @Override
+        public boolean handleMessage(@NonNull Message pMessage) {
+            if ((pMessage.what & PutSettingRunnable.cSettingProcessedOK) != 0){
+                mLongitude = mSetting.xLongitude();
+                mLattitude = mSetting.xLattitude();
+                sFillScreen();
+                Toast.makeText(mContext, getString(R.string.msg_update_OK), Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(mContext, getString(R.string.msg_update_NOK), Toast.LENGTH_SHORT).show();
+            }
+            return true;
+        }
+    });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +63,7 @@ public class ModifyLocation extends Activity {
 
         Intent lInt;
         Bundle lBundle;
+        JSONObject lSetting;
 
         mEdtLongitude = findViewById(R.id.edtLongitude);
         mEdtLattitude = findViewById(R.id.edtLattitude);
@@ -52,23 +75,31 @@ public class ModifyLocation extends Activity {
             lBundle = lInt.getExtras();
             if (lBundle == null){
                 mServerName = "";
+                mSetting = new Setting();
             } else {
                 mServerName = lBundle.getString(cServerName, "");
+                try{
+                    lSetting = new JSONObject(lBundle.getString(cSetting));
+                    mSetting = new Setting(lSetting);
+                } catch (JSONException pExc){
+                    mSetting = new Setting();
+                }
             }
-            mLongitude = 0.0;
-            mLattitude = 0.0;
-
+            mLongitude = mSetting.xLongitude();
+            mLattitude = mSetting.xLattitude();
         } else {
+            try{
+                lSetting = new JSONObject(savedInstanceState.getString(cSetting));
+                mSetting = new Setting(lSetting);
+            } catch (JSONException pExc){
+                mSetting = new Setting();
+            }
             mServerName = savedInstanceState.getString(cServerName);
             mLongitude = savedInstanceState.getDouble(cLongitude);
             mLattitude = savedInstanceState.getDouble(cLattitude);
         }
         sFillScreen();
         mServer = mData.xServer(mServerName);
-
-        if (mServer != null){
-            new GetLocation(this).execute();
-        }
     }
 
     @Override
@@ -76,6 +107,7 @@ public class ModifyLocation extends Activity {
         super.onSaveInstanceState(savedInstanceState);
 
         sReadScreen();
+        savedInstanceState.putString(cSetting, mSetting.xSetting().toString());
         savedInstanceState.putString(cServerName, mServerName);
         savedInstanceState.putDouble(cLongitude, mLongitude);
         savedInstanceState.putDouble(cLattitude, mLattitude);
@@ -101,35 +133,41 @@ public class ModifyLocation extends Activity {
             mLongitude = Double.parseDouble(mEdtLongitude.getText().toString());
             mLattitude = Double.parseDouble(mEdtLattitude.getText().toString());
         } catch (NumberFormatException pExc){
-            mLongitude = 0.0;
-            mLattitude = 0.0;
         }
     }
 
-    private void sProcessResponse(int pStatus, String pMessage, JSONObject pResult, boolean pMessageOK){
-        Setting lSetting;
+    private boolean sCheckScreen(){
+        boolean lResult;
+        double lLongitude = 0;
+        double lLattitude = 0;
 
-        switch (pStatus){
-            case Result.cResultOK:
-                lSetting = new Setting(pResult);
-
-                mLongitude = lSetting.xLongitude();
-                mLattitude = lSetting.xLattitude();
-                sFillScreen();
-                if (pMessageOK){
-                    Toast.makeText(mContext, pMessage, Toast.LENGTH_SHORT).show();
-                }
-                break;
-            case Result.cResultConnectTimeOut:
-                Toast.makeText(mContext, "Connect Time-Out", Toast.LENGTH_SHORT).show();
-                break;
-            case Result.cResultReadTimeOut:
-                Toast.makeText(mContext, "Read Time-Out", Toast.LENGTH_SHORT).show();
-                break;
-            default:
-                Toast.makeText(mContext, pMessage, Toast.LENGTH_SHORT).show();
-                break;
+        lResult = true;
+        try {
+            lLongitude = Double.parseDouble(mEdtLongitude.getText().toString());
+        } catch (NumberFormatException pExc){
+            Toast.makeText(mContext, getString(R.string.msg_long_format), Toast.LENGTH_SHORT).show();
+            lResult = false;
         }
+        if (lResult){
+            if (lLongitude < -180D || lLongitude > 180D){
+                Toast.makeText(mContext, getString(R.string.msg_long_range), Toast.LENGTH_SHORT).show();
+                lResult = false;
+            } else {
+                try {
+                    lLattitude = Double.parseDouble(mEdtLattitude.getText().toString());
+                } catch (NumberFormatException pExc){
+                    Toast.makeText(mContext, getString(R.string.msg_latt_format), Toast.LENGTH_SHORT).show();
+                    lResult = false;
+                }
+                if (lResult){
+                    if (lLattitude < -90D || lLattitude > 90D){
+                        Toast.makeText(mContext, getString(R.string.msg_latt_range), Toast.LENGTH_SHORT).show();
+                        lResult = false;
+                    }
+                }
+            }
+        }
+        return lResult;
     }
 
     private void sFillScreen(){
@@ -138,130 +176,23 @@ public class ModifyLocation extends Activity {
     }
 
     public void sProcess(MenuItem pMenu){
-        sReadScreen();
-        new SetLocation(this).execute();
+        PutSettingRunnable lRunnable;
+
+        if (sCheckScreen()){
+            sReadScreen();
+            mSetting.xLongitude(mLongitude);
+            mSetting.xLattitude(mLattitude);
+            lRunnable = new PutSettingRunnable(mServer.xAddress(), mSetting, mUpdateHandler, PutSettingRunnable.cSaveLocation);
+            LightControlApp.getInstance().xExecutor.execute(lRunnable);
+        }
     }
 
     public void sRefresh(MenuItem pMenu){
+        mLongitude = mSetting.xLongitude();
+        mLattitude = mSetting.xLattitude();
+        sFillScreen();
     }
 
     public void sDelete(MenuItem pMenu){
-    }
-
-    private static class GetLocation extends AsyncTask<Void, Void, RestAPI.RestResult> {
-        private WeakReference<ModifyLocation> mRefMain;
-
-        private GetLocation(ModifyLocation pMain){
-            mRefMain = new WeakReference<>(pMain);
-        }
-
-        @Override
-        protected RestAPI.RestResult doInBackground(Void... params) {
-            ModifyLocation lMain;
-            String lRequest;
-            RestAPI.RestResult lOutput;
-            RestAPI lRestAPI;
-
-            lMain = mRefMain.get();
-            if (lMain == null){
-                return null;
-            } else {
-                lRequest = lMain.mServer.xAddress() + URIs.UriServerSetting;
-                lRestAPI = new RestAPI();
-                lRestAPI.xMethod(RestAPI.cMethodGet);
-                lRestAPI.xMediaRequest(RestAPI.cMediaText);
-                lRestAPI.xMediaReply(RestAPI.cMediaJSON);
-                lRestAPI.xUrl(lRequest);
-                lRestAPI.xAction("");
-                lOutput = lRestAPI.xCallApi();
-                return lOutput;
-            }
-        }
-
-        protected void onPostExecute(RestAPI.RestResult pOutput) {
-            ModifyLocation lMain;
-
-            if (pOutput != null){
-                lMain = mRefMain.get();
-                if (lMain != null){
-                    lMain.sProcessResponse(pOutput.xResult(), pOutput.xText(), pOutput.xReplyJ(), false);
-                }
-            }
-        }
-    }
-
-    private static class SetLocation extends AsyncTask<Void, Void, RestAPI.RestResult> {
-        private WeakReference<ModifyLocation> mRefMain;
-
-        private SetLocation(ModifyLocation pMain){
-            mRefMain = new WeakReference<>(pMain);
-        }
-
-        @Override
-        protected RestAPI.RestResult doInBackground(Void... params) {
-            ModifyLocation lMain;
-            String lRequest;
-            RestAPI.RestResult lOutput;
-            RestAPI lRestAPI;
-            JSONObject lLocation;
-            JSONObject lAction;
-            String lActionS;
-
-            lMain = mRefMain.get();
-            if (lMain == null){
-                return null;
-            } else {
-                lLocation = new JSONObject();
-                lAction = new JSONObject();
-                try {
-                    lLocation.put(Setting.cLongitude, String.valueOf(lMain.mLongitude));
-                    lLocation.put(Setting.cLattitude, String.valueOf(lMain.mLattitude));
-                    lAction.put(Setting.cLocation, lLocation);
-                    lAction.put("lang", Locale.getDefault().getLanguage());
-                    lActionS = lAction.toString();
-                } catch (JSONException pExc){
-                    lActionS = "";
-                }
-
-                lRequest = lMain.mServer.xAddress() + URIs.UriServerSetting;
-                lRestAPI = new RestAPI();
-                lRestAPI.xMethod(RestAPI.cMethodPut);
-                lRestAPI.xMediaRequest(RestAPI.cMediaJSON);
-                lRestAPI.xMediaReply(RestAPI.cMediaJSON);
-                lRestAPI.xUrl(lRequest);
-                lRestAPI.xAction(lActionS);
-                lOutput = lRestAPI.xCallApi();
-                return lOutput;
-            }
-        }
-
-        protected void onPostExecute(RestAPI.RestResult pOutput) {
-            ModifyLocation lMain;
-            String lText;
-            JSONObject lResult;
-            JSONObject lSettingJ;
-            int lStatus;
-            final String cError = "Invalid reply!";
-
-            if (pOutput != null){
-                lMain = mRefMain.get();
-                if (lMain != null){
-                    if (pOutput.xResult() == Result.cResultOK){
-                        lResult = pOutput.xReplyJ();
-                        lText = lResult.optString("descr", cError);
-                        if (lText.equals(cError)){
-                            lStatus = Result.cResultJSONError;
-                            lSettingJ = null;
-                        } else {
-                            lStatus = Result.cResultOK;
-                            lSettingJ = lResult.optJSONObject(Setting.cSetting);
-                        }
-                        lMain.sProcessResponse(lStatus, lText, lSettingJ, true);
-                    } else {
-                        lMain.sProcessResponse(pOutput.xResult(), pOutput.xText(), null, false);
-                    }
-                }
-            }
-        }
     }
 }

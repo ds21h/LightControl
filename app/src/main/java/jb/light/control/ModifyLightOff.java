@@ -8,6 +8,10 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
+
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -25,6 +29,7 @@ public class ModifyLightOff extends Activity {
     private final Context mContext = this;
 
     static final String cServerName = "ServerName";
+    static final String cSetting = "Setting";
     private static final String cHour = "Hour";
     private static final String cMin = "Min";
     private static final String cPeriod = "Period";
@@ -33,6 +38,7 @@ public class ModifyLightOff extends Activity {
 
     private Data mData;
     private Server mServer;
+    private Setting mSetting;
 
     private TextView mTxtLightOff;
     private EditText mEdtPeriod;
@@ -41,6 +47,22 @@ public class ModifyLightOff extends Activity {
     private int mMinute;
     private int mPeriod;
 
+    Handler mUpdateHandler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
+        @Override
+        public boolean handleMessage(@NonNull Message pMessage) {
+            if ((pMessage.what & PutSettingRunnable.cSettingProcessedOK) != 0){
+                mHour = mSetting.xLightOffHour();
+                mMinute = mSetting.xLightOffMin();
+                mPeriod = mSetting.xLightOffPeriod();
+                sFillScreen();
+                Toast.makeText(mContext, getString(R.string.msg_update_OK), Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(mContext, getString(R.string.msg_update_NOK), Toast.LENGTH_SHORT).show();
+            }
+            return true;
+        }
+    });
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,9 +70,17 @@ public class ModifyLightOff extends Activity {
 
         Intent lInt;
         Bundle lBundle;
+        JSONObject lSetting;
 
         mTxtLightOff = findViewById(R.id.txtLightOff);
         mEdtPeriod = findViewById(R.id.edtPeriod);
+
+        mTxtLightOff.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sSetTimeLightOff();
+            }
+        });
 
         mData = Data.getInstance(mContext);
 
@@ -59,14 +89,27 @@ public class ModifyLightOff extends Activity {
             lBundle = lInt.getExtras();
             if (lBundle == null){
                 mServerName = "";
+                mSetting = new Setting();
             } else {
                 mServerName = lBundle.getString(cServerName, "");
+                try{
+                    lSetting = new JSONObject(lBundle.getString(cSetting));
+                    mSetting = new Setting(lSetting);
+                } catch (JSONException pExc){
+                    mSetting = new Setting();
+                }
             }
-            mHour = 0;
-            mMinute = 0;
-            mPeriod = 0;
+            mHour = mSetting.xLightOffHour();
+            mMinute = mSetting.xLightOffMin();
+            mPeriod = mSetting.xLightOffPeriod();
 
         } else {
+            try{
+                lSetting = new JSONObject(savedInstanceState.getString(cSetting));
+                mSetting = new Setting(lSetting);
+            } catch (JSONException pExc){
+                mSetting = new Setting();
+            }
             mServerName = savedInstanceState.getString(cServerName);
             mHour = savedInstanceState.getInt(cHour);
             mMinute = savedInstanceState.getInt(cMin);
@@ -74,9 +117,6 @@ public class ModifyLightOff extends Activity {
         }
         sFillScreen();
         mServer = mData.xServer(mServerName);
-        if (mServer != null){
-            new GetLightOff(this).execute();
-        }
     }
 
     @Override
@@ -84,6 +124,7 @@ public class ModifyLightOff extends Activity {
         super.onSaveInstanceState(savedInstanceState);
 
         sReadScreen();
+        savedInstanceState.putString(cSetting, mSetting.xSetting().toString());
         savedInstanceState.putString(cServerName, mServerName);
         savedInstanceState.putInt(cHour, mHour);
         savedInstanceState.putInt(cMin, mMinute);
@@ -109,35 +150,27 @@ public class ModifyLightOff extends Activity {
         try {
             mPeriod = Integer.parseInt(mEdtPeriod.getText().toString());
         } catch (NumberFormatException pExc){
-            mPeriod = 0;
         }
     }
 
-    private void sProcessResponse(int pStatus, String pMessage, JSONObject pResult, boolean pMessageOK){
-        Setting lSetting;
+    private boolean sCheckScreen(){
+        boolean lResult;
+        int lPeriod = 0;
 
-        switch (pStatus){
-            case Result.cResultOK:
-                lSetting = new Setting(pResult);
-
-                mHour = lSetting.xLightOffHour();
-                mMinute = lSetting.xLightOffMin();
-                mPeriod = lSetting.xLightOffPeriod();
-                sFillScreen();
-                if (pMessageOK){
-                    Toast.makeText(mContext, pMessage, Toast.LENGTH_SHORT).show();
-                }
-                break;
-            case Result.cResultConnectTimeOut:
-                Toast.makeText(mContext, "Connect Time-Out", Toast.LENGTH_SHORT).show();
-                break;
-            case Result.cResultReadTimeOut:
-                Toast.makeText(mContext, "Read Time-Out", Toast.LENGTH_SHORT).show();
-                break;
-            default:
-                Toast.makeText(mContext, pMessage, Toast.LENGTH_SHORT).show();
-                break;
+        lResult = true;
+        try {
+            lPeriod = Integer.parseInt(mEdtPeriod.getText().toString());
+        } catch (NumberFormatException pExc){
+            Toast.makeText(mContext, getString(R.string.msg_period_format), Toast.LENGTH_SHORT).show();
+            lResult = false;
         }
+        if (lResult){
+            if (lPeriod < 0 || lPeriod > 120){
+                Toast.makeText(mContext, getString(R.string.msg_period_range), Toast.LENGTH_SHORT).show();
+                lResult = false;
+            }
+        }
+        return lResult;
     }
 
     @SuppressLint({"DefaultLocale", "SetTextI18n"})
@@ -146,9 +179,7 @@ public class ModifyLightOff extends Activity {
         mEdtPeriod.setText(String.valueOf(mPeriod));
     }
 
-    public void sSetTimeLightOff(View pView){
-        sReadScreen();
-
+    private void sSetTimeLightOff(){
         TimePickerDialog lPicker = new TimePickerDialog(this, new TimePickerDialog.OnTimeSetListener() {
             public void onTimeSet(TimePicker view, int pHour, int pMinute) {
                 mHour = pHour;
@@ -160,133 +191,26 @@ public class ModifyLightOff extends Activity {
     }
 
     public void sProcess(MenuItem pMenu){
-        sReadScreen();
-        new SetLightOff(this).execute();
+        PutSettingRunnable lRunnable;
+
+        if (sCheckScreen()){
+            sReadScreen();
+            mSetting.xLightOffHour(mHour);
+            mSetting.xLightOffMin(mMinute);
+            mSetting.xLightOffPeriod(mPeriod);
+            lRunnable = new PutSettingRunnable(mServer.xAddress(), mSetting, mUpdateHandler, PutSettingRunnable.cSaveLightOff);
+            LightControlApp.getInstance().xExecutor.execute(lRunnable);
+        }
     }
 
     public void sRefresh(MenuItem pMenu){
-
+        mHour = mSetting.xLightOffHour();
+        mMinute = mSetting.xLightOffMin();
+        mPeriod = mSetting.xLightOffPeriod();
+        sFillScreen();
     }
 
     public void sDelete(MenuItem pMenu){
 
-    }
-
-    private static class GetLightOff extends AsyncTask<Void, Void, RestAPI.RestResult> {
-        WeakReference<ModifyLightOff> mRefMain;
-
-        private GetLightOff(ModifyLightOff pMain){
-            mRefMain = new WeakReference<>(pMain);
-        }
-
-        @Override
-        protected RestAPI.RestResult doInBackground(Void... params) {
-            ModifyLightOff lMain;
-            String lRequest;
-            RestAPI.RestResult lOutput;
-            RestAPI lRestAPI;
-
-            lMain = mRefMain.get();
-            if (lMain == null){
-                return null;
-            } else {
-                lRequest = lMain.mServer.xAddress() + URIs.UriServerSetting;
-                lRestAPI = new RestAPI();
-                lRestAPI.xMethod(RestAPI.cMethodGet);
-                lRestAPI.xMediaRequest(RestAPI.cMediaText);
-                lRestAPI.xMediaReply(RestAPI.cMediaJSON);
-                lRestAPI.xUrl(lRequest);
-                lRestAPI.xAction("");
-                lOutput = lRestAPI.xCallApi();
-                return lOutput;
-            }
-        }
-
-        protected void onPostExecute(RestAPI.RestResult pOutput) {
-            ModifyLightOff lMain;
-
-            if (pOutput != null){
-                lMain = mRefMain.get();
-                if (lMain != null){
-                    lMain.sProcessResponse(pOutput.xResult(), pOutput.xText(), pOutput.xReplyJ(), false);
-                }
-            }
-        }
-    }
-
-    private static class SetLightOff extends AsyncTask<Void, Void, RestAPI.RestResult> {
-        WeakReference<ModifyLightOff> mRefMain;
-
-        private SetLightOff(ModifyLightOff pMain){
-            mRefMain = new WeakReference<>(pMain);
-        }
-
-        @SuppressLint("DefaultLocale")
-        @Override
-        protected RestAPI.RestResult doInBackground(Void... params) {
-            ModifyLightOff lMain;
-            String lRequest;
-            RestAPI.RestResult lOutput;
-            RestAPI lRestAPI;
-            JSONObject lLightOff;
-            JSONObject lAction;
-            String lActionS;
-
-            lMain = mRefMain.get();
-            if (lMain == null){
-                return null;
-            } else {
-                lLightOff = new JSONObject();
-                lAction = new JSONObject();
-                try {
-                    lLightOff.put(Setting.cPointInTime, String.format("%02d", lMain.mHour) + ":" + String.format("%02d", lMain.mMinute));
-                    lLightOff.put(Setting.cPeriod, String.valueOf(lMain.mPeriod));
-                    lAction.put(Setting.cLightOff, lLightOff);
-                    lAction.put("lang", Locale.getDefault().getLanguage());
-                    lActionS = lAction.toString();
-                } catch (JSONException pExc){
-                    lActionS = "";
-                }
-
-                lRequest = lMain.mServer.xAddress() + URIs.UriServerSetting;
-                lRestAPI = new RestAPI();
-                lRestAPI.xMethod(RestAPI.cMethodPut);
-                lRestAPI.xMediaRequest(RestAPI.cMediaJSON);
-                lRestAPI.xMediaReply(RestAPI.cMediaJSON);
-                lRestAPI.xUrl(lRequest);
-                lRestAPI.xAction(lActionS);
-                lOutput = lRestAPI.xCallApi();
-                return lOutput;
-            }
-        }
-
-        protected void onPostExecute(RestAPI.RestResult pOutput) {
-            ModifyLightOff lMain;
-            String lText;
-            JSONObject lResult;
-            JSONObject lSettingJ;
-            int lStatus;
-            final String cError = "Invalid reply!";
-
-            if (pOutput != null){
-                lMain = mRefMain.get();
-                if (lMain != null){
-                    if (pOutput.xResult() == Result.cResultOK){
-                        lResult = pOutput.xReplyJ();
-                        lText = lResult.optString("descr", cError);
-                        if (lText.equals(cError)){
-                            lStatus = Result.cResultJSONError;
-                            lSettingJ = null;
-                        } else {
-                            lStatus = Result.cResultOK;
-                            lSettingJ = lResult.optJSONObject(Setting.cSetting);
-                        }
-                        lMain.sProcessResponse(lStatus, lText, lSettingJ, true);
-                    } else {
-                        lMain.sProcessResponse(pOutput.xResult(), pOutput.xText(), null, false);
-                    }
-                }
-            }
-        }
     }
 }

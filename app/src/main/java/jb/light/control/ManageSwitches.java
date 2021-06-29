@@ -22,7 +22,7 @@ public class ManageSwitches extends Activity {
     private String mServerName;
     private Data mData;
     private Server mServer;
-    List<Switch> mSwitches;
+    List<SwitchLocal> mSwitches;
 
 
     private ListView mList;

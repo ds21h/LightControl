@@ -27,7 +27,6 @@
             android:clickable="true"
             android:focusable="true"
             android:enabled="true"
-            android:onClick="sSetTimeLightOff"
             android:paddingStart="10dp"
             android:text="23:30"
             android:textAppearance="?android:attr/textAppearanceMedium" />

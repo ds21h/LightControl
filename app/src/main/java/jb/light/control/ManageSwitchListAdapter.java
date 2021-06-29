@@ -16,9 +16,9 @@ import java.util.List;
  * Created by Jan on 18-9-2015.
  */
 public class ManageSwitchListAdapter extends ArrayAdapter<Switch> {
-    private List<Switch> mSwitches;
-    private int mLayout;
-    private Context mContext;
+    private final List<Switch> mSwitches;
+    private final int mLayout;
+    private final Context mContext;
 
     ManageSwitchListAdapter(Context pContext, int pLayout, List<Switch> pSwitches) {
         super(pContext, pLayout, pSwitches);
@@ -48,18 +48,11 @@ public class ManageSwitchListAdapter extends ArrayAdapter<Switch> {
             lRow = inflater.inflate(mLayout, pGroup, false);
 
             lHandle = new SwitchListHandle();
+            lHandle.xSeq = lRow.findViewById(R.id.txtSeq);
             lHandle.xTxtName = lRow.findViewById(R.id.txtName);
-            lHandle.xTxtType = lRow.findViewById(R.id.txtType);
             lHandle.xChkActive = lRow.findViewById(R.id.chkActive);
-            lHandle.xTxtGroup = lRow.findViewById(R.id.txtGroup);
-            lHandle.xTxtPoint = lRow.findViewById(R.id.txtPoint);
             lHandle.xTxtIP = lRow.findViewById(R.id.txtIP);
             lHandle.xTxtPause = lRow.findViewById(R.id.txtPause);
-            lHandle.xLyoFM = lRow.findViewById((R.id.lyoFM));
-            lHandle.xLyoIot = lRow.findViewById((R.id.lyoIot));
-
-            lHandle.xParHide = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0);
-            lHandle.xParShow = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 
             lRow.setTag(lHandle);
         }
@@ -70,37 +63,19 @@ public class ManageSwitchListAdapter extends ArrayAdapter<Switch> {
 
     private void sSetItem(SwitchListHandle pHandle, int pPos) {
         pHandle.xSwitch = mSwitches.get(pPos);
+        pHandle.xSeq.setText(String.valueOf(pHandle.xSwitch.xSeqNumber()));
         pHandle.xTxtName.setText(pHandle.xSwitch.xName());
-        pHandle.xTxtType.setText(pHandle.xSwitch.xType());
         pHandle.xChkActive.setChecked(pHandle.xSwitch.xActive());
-        if (pHandle.xSwitch.xType().equals("esp")){
-            pHandle.xLyoFM.setLayoutParams(pHandle.xParHide);
-            pHandle.xLyoIot.setLayoutParams(pHandle.xParShow);
-            pHandle.xTxtIP.setText(pHandle.xSwitch.xIP());
-            pHandle.xTxtGroup.setText("");
-            pHandle.xTxtPoint.setText("");
-        } else {
-            pHandle.xLyoFM.setLayoutParams(pHandle.xParShow);
-            pHandle.xLyoIot.setLayoutParams(pHandle.xParHide);
-            pHandle.xTxtIP.setText("");
-            pHandle.xTxtGroup.setText(pHandle.xSwitch.xGroup());
-            pHandle.xTxtPoint.setText(pHandle.xSwitch.xPoint());
-        }
+        pHandle.xTxtIP.setText(pHandle.xSwitch.xIP());
         pHandle.xTxtPause.setText(String.valueOf(pHandle.xSwitch.xPause()));
     }
 
     static class SwitchListHandle{
         Switch xSwitch;
+        TextView xSeq;
         TextView xTxtName;
-        TextView xTxtType;
         CheckBox xChkActive;
-        TextView xTxtGroup;
-        TextView xTxtPoint;
         TextView xTxtIP;
         TextView xTxtPause;
-        LinearLayout xLyoFM;
-        LinearLayout xLyoIot;
-        LinearLayout.LayoutParams xParHide;
-        LinearLayout.LayoutParams xParShow;
     }
 }
