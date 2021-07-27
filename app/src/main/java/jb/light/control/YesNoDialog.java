@@ -3,7 +3,6 @@ package jb.light.control;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
-import android.content.DialogInterface;
 import android.os.Bundle;
 
 /**
@@ -21,8 +20,8 @@ public class YesNoDialog extends DialogFragment {
         void onYesNoDialogEnd(String pResult);
     }
 
-    public YesNoDialog(){
-    }
+//    public YesNoDialog(){
+//    }
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState){
@@ -41,23 +40,13 @@ public class YesNoDialog extends DialogFragment {
         return new AlertDialog.Builder(getActivity())
                 .setTitle(lTitle)
                 .setMessage(lMessage)
-                .setPositiveButton(lYesButton, new DialogInterface.OnClickListener()
-                {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which)
-                    {
-                        YesNoDialogListener lListener = (YesNoDialogListener) getActivity();
-                        lListener.onYesNoDialogEnd(cYesResult);
-                    }
+                .setPositiveButton(lYesButton, (dialog, which) -> {
+                    YesNoDialogListener lListener = (YesNoDialogListener) getActivity();
+                    lListener.onYesNoDialogEnd(cYesResult);
                 })
-                .setNegativeButton(lNoButton, new DialogInterface.OnClickListener()
-                {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which)
-                    {
-                        YesNoDialogListener lListener = (YesNoDialogListener) getActivity();
-                        lListener.onYesNoDialogEnd(cNoResult);
-                    }
+                .setNegativeButton(lNoButton, (dialog, which) -> {
+                    YesNoDialogListener lListener = (YesNoDialogListener) getActivity();
+                    lListener.onYesNoDialogEnd(cNoResult);
                 })
                 .create();
     }

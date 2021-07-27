@@ -84,4 +84,10 @@
     <string name="msg_repeat_range">Bereik herhaling fout (0 ... 10)</string>
     <string name="msg_update_OK">Wijziging uitgevoerd</string>
     <string name="msg_update_NOK">Wijziging mislukt</string>
+    <string name="msg_int_error">Interne fout!</string>
+    <string name="msg_comm_error">Communicatie fout!</string>
+    <string name="msg_server_error">Server fout!</string>
+    <string name="msg_switch_updated">Schakelaar gewijzigd</string>
+    <string name="msg_switch_added">Schakelaar toegevoegd</string>
+    <string name="msg_switch_deleted">Schakelaar verwijderd</string>
 </resources>

@@ -5,7 +5,7 @@ package jb.light.control;
  * Synchronise with class Switch in LightSupport
  *
  *
- * Version 20210611-01
+ * Version 20210726
  *
  */
 import org.json.JSONException;

@@ -8,7 +8,7 @@ This app started its life completely in the Dutch language. Starting from versio
 
 History:
 
-Version 3.2 - 29-06-2021<br />
+Version 3.2 - 27-07-2021<br />
     -   Deleted support of obsolete attributes:<br />
         Switch: Type, Group and Point<br />
         Setting: MaxSensor<br />

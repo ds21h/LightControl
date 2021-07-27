@@ -3,23 +3,16 @@ package jb.light.control;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
-
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
-import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.lang.ref.WeakReference;
-import java.util.Locale;
 
 public class ModifyLocation extends Activity {
     private final Context mContext = this;
@@ -44,13 +37,18 @@ public class ModifyLocation extends Activity {
     Handler mUpdateHandler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
         @Override
         public boolean handleMessage(@NonNull Message pMessage) {
-            if ((pMessage.what & PutSettingRunnable.cSettingProcessedOK) != 0){
-                mLongitude = mSetting.xLongitude();
-                mLattitude = mSetting.xLattitude();
-                sFillScreen();
-                Toast.makeText(mContext, getString(R.string.msg_update_OK), Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(mContext, getString(R.string.msg_update_NOK), Toast.LENGTH_SHORT).show();
+            String lErrMsg;
+
+            if ((pMessage.what & HandlerCode.cPutServerSetting) != 0){
+                lErrMsg = HandlerCode.xCheckCode(mContext, pMessage.what);
+                if (lErrMsg == null){
+                    mLongitude = mSetting.xLongitude();
+                    mLattitude = mSetting.xLattitude();
+                    sFillScreen();
+                    Toast.makeText(mContext, getString(R.string.msg_update_OK), Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(mContext, lErrMsg, Toast.LENGTH_SHORT).show();
+                }
             }
             return true;
         }
@@ -81,7 +79,7 @@ public class ModifyLocation extends Activity {
                 try{
                     lSetting = new JSONObject(lBundle.getString(cSetting));
                     mSetting = new Setting(lSetting);
-                } catch (JSONException pExc){
+                } catch (Exception pExc){
                     mSetting = new Setting();
                 }
             }
@@ -91,7 +89,7 @@ public class ModifyLocation extends Activity {
             try{
                 lSetting = new JSONObject(savedInstanceState.getString(cSetting));
                 mSetting = new Setting(lSetting);
-            } catch (JSONException pExc){
+            } catch (Exception pExc){
                 mSetting = new Setting();
             }
             mServerName = savedInstanceState.getString(cServerName);
@@ -132,7 +130,7 @@ public class ModifyLocation extends Activity {
         try {
             mLongitude = Double.parseDouble(mEdtLongitude.getText().toString());
             mLattitude = Double.parseDouble(mEdtLattitude.getText().toString());
-        } catch (NumberFormatException pExc){
+        } catch (NumberFormatException ignored){
         }
     }
 

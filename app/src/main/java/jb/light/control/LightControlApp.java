@@ -1,7 +1,6 @@
 package jb.light.control;
 
 import android.app.Application;
-import android.content.Context;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -19,9 +18,5 @@ public class LightControlApp extends Application {
         super.onCreate();
         mLightControlApp = this;
         xExecutor = Executors.newCachedThreadPool();
-    }
-
-    Context xContext(){
-        return this;
     }
 }

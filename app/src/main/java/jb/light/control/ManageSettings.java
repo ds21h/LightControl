@@ -10,8 +10,6 @@ import androidx.annotation.NonNull;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -38,28 +36,34 @@ public class ManageSettings extends Activity {
         @Override
         public boolean handleMessage(@NonNull Message pMessage) {
             SettingItem lItem;
+            String lErrMsg;
 
-            if ((pMessage.what & GetSettingRunnable.cSettingRetrieved) != 0){
-                mListAdapter.clear();
+            if ((pMessage.what & HandlerCode.cGetServerSetting) != 0) {
+                lErrMsg = HandlerCode.xCheckCode(mContext, pMessage.what);
+                if (lErrMsg == null){
+                    mListAdapter.clear();
 //                      Location
-                lItem = new SettingItem();
-                lItem.xType(SettingItem.TypeLocation);
-                lItem.xAttr1(String.valueOf(mSetting.xLongitude()));
-                lItem.xAttr2(String.valueOf(mSetting.xLattitude()));
-                mListAdapter.add(lItem);
+                    lItem = new SettingItem();
+                    lItem.xType(SettingItem.TypeLocation);
+                    lItem.xAttr1(String.valueOf(mSetting.xLongitude()));
+                    lItem.xAttr2(String.valueOf(mSetting.xLattitude()));
+                    mListAdapter.add(lItem);
 //                      Lights off
-                lItem = new SettingItem();
-                lItem.xType(SettingItem.TypeLightsOff);
-                lItem.xAttr1(mSetting.xLightOff());
-                lItem.xAttr2(String.valueOf(mSetting.xLightOffPeriod()));
-                mListAdapter.add(lItem);
+                    lItem = new SettingItem();
+                    lItem.xType(SettingItem.TypeLightsOff);
+                    lItem.xAttr1(mSetting.xLightOff());
+                    lItem.xAttr2(String.valueOf(mSetting.xLightOffPeriod()));
+                    mListAdapter.add(lItem);
 //                      Sensor
-                lItem = new SettingItem();
-                lItem.xType(SettingItem.TypeSensor);
-                lItem.xAttr1(String.valueOf(mSetting.xSensorLimit()));
-                lItem.xAttr2(String.valueOf(mSetting.xPeriodSec()));
-                lItem.xAttr3(String.valueOf(mSetting.xPeriodDark()));
-                mListAdapter.add(lItem);
+                    lItem = new SettingItem();
+                    lItem.xType(SettingItem.TypeSensor);
+                    lItem.xAttr1(String.valueOf(mSetting.xSensorLimit()));
+                    lItem.xAttr2(String.valueOf(mSetting.xPeriodSec()));
+                    lItem.xAttr3(String.valueOf(mSetting.xPeriodDark()));
+                    mListAdapter.add(lItem);
+                } else {
+                    Toast.makeText(mContext, lErrMsg, Toast.LENGTH_SHORT).show();
+                }
             }
             return true;
         }
@@ -79,7 +83,11 @@ public class ManageSettings extends Activity {
         if (savedInstanceState==null){
             lInt = getIntent();
             lBundle = lInt.getExtras();
-            mServerName = lBundle.getString(cServerName, "");
+            if (lBundle == null){
+                mServerName = "";
+            } else {
+                mServerName = lBundle.getString(cServerName, "");
+            }
         } else {
             mServerName = savedInstanceState.getString(cServerName);
         }
@@ -87,16 +95,13 @@ public class ManageSettings extends Activity {
 
         mList = findViewById(R.id.lstSettings);
 
-        mListAdapter = new SettingListAdapter(this, R.layout.manage_setting_list_item, new ArrayList<SettingItem>());
+        mListAdapter = new SettingListAdapter(this, R.layout.manage_setting_list_item, new ArrayList<>());
         mList.setAdapter(mListAdapter);
-        mList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View pView, int position, long id) {
-                SettingListAdapter.SettingListHandle lHandle;
+        mList.setOnItemClickListener((parent, pView, position, id) -> {
+            SettingListAdapter.SettingListHandle lHandle;
 
-                lHandle = (SettingListAdapter.SettingListHandle)pView.getTag();
-                sModifySetting(lHandle.xItem.xType());
-            }
+            lHandle = (SettingListAdapter.SettingListHandle)pView.getTag();
+            sModifySetting(lHandle.xItem.xType());
         });
     }
 

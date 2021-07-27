@@ -84,11 +84,10 @@ class RestAPI {
         if (mMethod.equals(cMethodGet)){
             if (!mAction.equals("")){
                 lUrlS = mUrl + "?" + mAction;
-                lAction = "";
             } else {
                 lUrlS = mUrl;
-                lAction = "";
             }
+            lAction = "";
         } else {
             lUrlS = mUrl;
             lAction = mAction;
@@ -143,7 +142,7 @@ class RestAPI {
         private int mResult;
         private String mText;
         private JSONObject mReplyJ;
-        private String mReplyS;
+        private final String mReplyS;
         private boolean mJson;
 
         int xResult(){

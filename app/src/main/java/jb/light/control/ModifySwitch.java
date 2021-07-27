@@ -4,19 +4,16 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.lang.ref.WeakReference;
-import java.util.Locale;
 
 /**
  * Created by Jan on 22-9-2015.
@@ -33,6 +30,7 @@ public class ModifySwitch extends Activity {
     private Data mData;
     private Server mServer;
     private SwitchLocal mSwitch;
+    private boolean mSwitchDeleted;
     private boolean mButton;
 
     private String mAction = "";
@@ -45,6 +43,7 @@ public class ModifySwitch extends Activity {
     private String mSwitchPause;
     private boolean mButtonActive;
     private boolean mSwitchActive;
+    private int mSwitchAction;
 
     private static final String cTitle = "Title";
     private static final String cButton = "Button";
@@ -55,6 +54,8 @@ public class ModifySwitch extends Activity {
     private static final String cSwitchPause = "SwitchPause";
     private static final String cButtonActive = "ButtonActive";
     private static final String cSwitchActive = "SwitchActive";
+    private static final String cSwitchAction = "SwitchAction";
+    private static final String cSwitchDeleted = "SwitchDeleted";
 
     private EditText mEdtSeqNumber;
     private EditText mEdtName;
@@ -62,6 +63,75 @@ public class ModifySwitch extends Activity {
     private EditText mEdtPause;
     private CheckBox mChkActive;
     private CheckBox mChkButton;
+
+    Handler mUpdateHandler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
+        @Override
+        public boolean handleMessage(@NonNull Message pMessage) {
+            SwitchLocal lSwitch;
+            String lErrMsg;
+
+            if ((pMessage.what & HandlerCode.cServerSwitch) != 0) {
+                lErrMsg = HandlerCode.xCheckCode(mContext, pMessage.what);
+                if (lErrMsg == null) {
+                    switch (mSwitchAction) {
+                        case SwitchLocal.ActionNew: {
+                            Toast.makeText(mContext, R.string.msg_switch_added, Toast.LENGTH_SHORT).show();
+                            lSwitch = sProcessScreen();
+                            if (lSwitch != null) {
+                                mSwitch = lSwitch;
+                                mData.xNewSwitch(lSwitch, mServerName);
+                            }
+                            sFillScreen();
+                            break;
+                        }
+                        case SwitchLocal.ActionModify: {
+                            Toast.makeText(mContext, R.string.msg_switch_updated, Toast.LENGTH_SHORT).show();
+                            lSwitch = sProcessScreen();
+                            if (lSwitch != null) {
+                                mSwitch = lSwitch;
+                                mData.xModifySwitch(lSwitch, mServerName);
+                            }
+                            sFillScreen();
+                            break;
+                        }
+                        case SwitchLocal.ActionDelete: {
+                            Toast.makeText(mContext, R.string.msg_switch_deleted, Toast.LENGTH_SHORT).show();
+                            mData.xDeleteSwitch(mSwitchId, mServerName);
+                            mSwitchDeleted = true;
+                            sFillScreen();
+                            break;
+                        }
+                    }
+                } else {
+                    Toast.makeText(mContext, lErrMsg, Toast.LENGTH_SHORT).show();
+                }
+            }
+            if ((pMessage.what & HandlerCode.cSwitchSetting) != 0) {
+                lErrMsg = HandlerCode.xCheckCode(mContext, pMessage.what);
+                if (lErrMsg == null) {
+                    if (mSwitch.xStatus() != SwitchLocal.StatusNone) {
+                        mButtonActive = mSwitch.xButton();
+                        mChkButton.setChecked(mButtonActive);
+                        Toast.makeText(mContext, R.string.msg_button_set, Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(mContext, lErrMsg, Toast.LENGTH_SHORT).show();
+                }
+            }
+            if ((pMessage.what & HandlerCode.cSwitch) != 0) {
+                lErrMsg = HandlerCode.xCheckCode(mContext, pMessage.what);
+                if (lErrMsg == null) {
+                    if (mSwitch.xStatus() != SwitchLocal.StatusNone) {
+                        mButtonActive = mSwitch.xButton();
+                        mChkButton.setChecked(mButtonActive);
+                    }
+                } else {
+                    Toast.makeText(mContext, lErrMsg, Toast.LENGTH_SHORT).show();
+                }
+            }
+            return true;
+        }
+    });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,7 +141,7 @@ public class ModifySwitch extends Activity {
         Intent lInt;
         Uri lUri;
         Bundle lBundle;
-        int lCount;
+        SwitchRunnable lSwitchRunnable;
 
         mData = Data.getInstance(mContext);
 
@@ -85,23 +155,24 @@ public class ModifySwitch extends Activity {
         if (savedInstanceState == null) {
             lInt = getIntent();
             lBundle = lInt.getExtras();
-            if (lBundle == null){
+            if (lBundle == null) {
                 finish();
             } else {
                 mServerName = lBundle.getString(cServerName);
                 mAction = lInt.getAction();
                 mServer = mData.xServer(mServerName);
                 mButton = false;
-                if (mAction.equals(Intent.ACTION_EDIT)){
+                if (mAction.equals(Intent.ACTION_EDIT)) {
                     lUri = lInt.getData();
-                    if (lUri == null){
+                    if (lUri == null) {
                         finish();
                     } else {
                         mSwitchName = lUri.getLastPathSegment();
                         mChangeName = false;
                         mTitle = getString(R.string.title_modify_switch);
                         mSwitch = mData.xSwitch(mServer.xName(), mSwitchName);
-                        new GetButton(this).execute();
+                        lSwitchRunnable = new SwitchRunnable(mSwitch, mUpdateHandler);
+                        LightControlApp.getInstance().xExecutor.execute(lSwitchRunnable);
                     }
                 } else {
                     mSwitchName = "";
@@ -115,6 +186,8 @@ public class ModifySwitch extends Activity {
                 mSwitchPause = String.valueOf(mSwitch.xPause());
                 mButtonActive = false;
                 mSwitchActive = mSwitch.xActive();
+                mSwitchAction = SwitchLocal.ActionNone;
+                mSwitchDeleted = false;
             }
         } else {
             mTitle = savedInstanceState.getString(cTitle);
@@ -127,9 +200,11 @@ public class ModifySwitch extends Activity {
             mSwitchPause = savedInstanceState.getString(cSwitchPause);
             mButtonActive = savedInstanceState.getBoolean(cButtonActive);
             mSwitchActive = savedInstanceState.getBoolean(cSwitchActive);
+            mSwitchAction = savedInstanceState.getInt(cSwitchAction);
+            mSwitchDeleted = savedInstanceState.getBoolean(cSwitchDeleted);
 
             mServer = mData.xServer(mServerName);
-            if (mSwitchName.equals("")){
+            if (mSwitchName.equals("")) {
                 mSwitch = new SwitchLocal();
             } else {
                 mSwitch = mData.xSwitch(mServer.xName(), mSwitchId);
@@ -154,6 +229,8 @@ public class ModifySwitch extends Activity {
         savedInstanceState.putString(cSwitchPause, mSwitchPause);
         savedInstanceState.putBoolean(cButtonActive, mButtonActive);
         savedInstanceState.putBoolean(cSwitchActive, mSwitchActive);
+        savedInstanceState.putInt(cSwitchAction, mSwitchAction);
+        savedInstanceState.putBoolean(cSwitchDeleted, mSwitchDeleted);
 
         super.onSaveInstanceState(savedInstanceState);
     }
@@ -167,7 +244,7 @@ public class ModifySwitch extends Activity {
     }
 
     @Override
-    public boolean onPrepareOptionsMenu(Menu pMenu){
+    public boolean onPrepareOptionsMenu(Menu pMenu) {
         super.onPrepareOptionsMenu(pMenu);
 
         MenuItem lItem;
@@ -177,7 +254,15 @@ public class ModifySwitch extends Activity {
         return true;
     }
 
-    public void sRefresh(MenuItem pItem){
+    @Override
+    public void onStop() {
+        mUpdateHandler.removeCallbacksAndMessages(null);
+        super.onStop();
+    }
+
+    public void sRefresh(MenuItem pItem) {
+        SwitchRunnable lSwitchRunnable;
+
         mSwitchSeqNumber = String.valueOf(mSwitch.xSeqNumber());
         mSwitchId = mSwitch.xName();
         mSwitchIP = mSwitch.xIP();
@@ -185,94 +270,84 @@ public class ModifySwitch extends Activity {
         mButtonActive = false;
         mSwitchActive = mSwitch.xActive();
         sFillScreen();
-        new GetButton(this).execute();
+        lSwitchRunnable = new SwitchRunnable(mSwitch, mUpdateHandler);
+        LightControlApp.getInstance().xExecutor.execute(lSwitchRunnable);
     }
 
-    public void sProcess(MenuItem pItem){
+    public void sProcess(MenuItem pItem) {
         SwitchLocal lSwitch;
-        SwitchLocal[] lSwitches;
+        SwitchSettingRunnable lSwitchSettingRunnable;
+        ServerSwitchRunnable lServerSwitchRunnable;
 
         sReadScreen();
         lSwitch = sProcessScreen();
-        if (lSwitch !=null){
-            if (lSwitch.xIsEqual(mSwitch)){
-                if (mAction.equals(Intent.ACTION_EDIT)){
-                    if (mButtonActive == mButton){
+        if (lSwitch != null) {
+            if (lSwitch.xIsEqual(mSwitch)) {
+                if (mAction.equals(Intent.ACTION_EDIT)) {
+                    if (mButtonActive == mSwitch.xButton()) {
                         Toast.makeText(this, R.string.msg_nochange, Toast.LENGTH_SHORT).show();
                     } else {
-                        new SetButton(this).execute();
+                        if (mButtonActive) {
+                            mSwitch.xAction(SwitchLocal.ActionButtonOn);
+                        } else {
+                            mSwitch.xAction(SwitchLocal.ActionButtonOff);
+                        }
+                        lSwitchSettingRunnable = new SwitchSettingRunnable(mSwitch, mUpdateHandler);
+                        LightControlApp.getInstance().xExecutor.execute(lSwitchSettingRunnable);
                     }
                 } else {
                     Toast.makeText(this, R.string.msg_nochange, Toast.LENGTH_SHORT).show();
                 }
             } else {
-                lSwitches = new SwitchLocal[1];
-                lSwitches[0] = new SwitchLocal(lSwitch);
-                if (mAction.equals((Intent.ACTION_INSERT))){
-                    lSwitches[0].xAction(SwitchLocal.ActionNew);
-                    mData.xNewSwitch(lSwitch, mServerName);
+                if (mAction.equals((Intent.ACTION_INSERT))) {
+                    lSwitch.xAction(SwitchLocal.ActionNew);
                 } else {
-                    lSwitches[0].xAction(SwitchLocal.ActionModify);
-                    mData.xModifySwitch(lSwitch, mServerName);
+                    lSwitch.xAction(SwitchLocal.ActionModify);
                 }
-                new SetSwitch(this).execute(lSwitches);
+                mSwitchAction = lSwitch.xAction();
+                lServerSwitchRunnable = new ServerSwitchRunnable(lSwitch, mServer.xAddress(), mUpdateHandler);
+                LightControlApp.getInstance().xExecutor.execute(lServerSwitchRunnable);
             }
         }
     }
 
-    public void sDelete(MenuItem pItem){
-        SwitchLocal[] lSwitches;
+    public void sDelete(MenuItem pItem) {
+        SwitchLocal lSwitch;
+        ServerSwitchRunnable lServerSwitchRunnable;
 
-        sReadScreen();
-        lSwitches = new SwitchLocal[1];
-        lSwitches[0] = new SwitchLocal(mSwitchId);
-        lSwitches[0].xAction(SwitchLocal.ActionDelete);
-        new SetSwitch(this).execute(lSwitches);
-
-        mData.xDeleteSwitch(mSwitchId, mServerName);
-        finish();
-    }
-
-    private void sFillButton(int pStatus, String pMessage, JSONObject pResult, boolean pMessageOK){
-        String lButton;
-        final String cError = "error";
-
-        switch (pStatus){
-            case Result.cResultOK:
-                lButton = pResult.optString("button", cError);
-                if (lButton.equals(cError)){
-                    Toast.makeText(mContext, "Wrong answer!", Toast.LENGTH_SHORT).show();
-                } else {
-                    mButton = lButton.equals("on");
-                    mButtonActive = mButton;
-                    mChkButton.setChecked(mButtonActive);
-                    if (pMessageOK){
-                        Toast.makeText(mContext, R.string.msg_button_set, Toast.LENGTH_SHORT).show();
-                    }
-                }
-                break;
-            case Result.cResultConnectTimeOut:
-                Toast.makeText(mContext, "Connect Time-Out", Toast.LENGTH_SHORT).show();
-                break;
-            case Result.cResultReadTimeOut:
-                Toast.makeText(mContext, "Read Time-Out", Toast.LENGTH_SHORT).show();
-                break;
-            default:
-                Toast.makeText(mContext, pMessage, Toast.LENGTH_SHORT).show();
-                break;
+        if (!mSwitchDeleted) {
+            sReadScreen();
+            lSwitch = new SwitchLocal(mSwitchId);
+            lSwitch.xAction(SwitchLocal.ActionDelete);
+            mSwitchAction = lSwitch.xAction();
+            lServerSwitchRunnable = new ServerSwitchRunnable(lSwitch, mServer.xAddress(), mUpdateHandler);
+            LightControlApp.getInstance().xExecutor.execute(lServerSwitchRunnable);
         }
     }
 
-    private void sFillScreen(){
-        mEdtSeqNumber.setText(mSwitchSeqNumber);
-        mEdtName.setText(mSwitchId);
-        mEdtIP.setText(mSwitchIP);
-        mEdtPause.setText(mSwitchPause);
-        mChkActive.setChecked(mSwitchActive);
-        mChkButton.setChecked(mButtonActive);
+    private void sFillScreen() {
+        if (mSwitchDeleted) {
+            mEdtSeqNumber.setText("");
+            mEdtSeqNumber.setEnabled(false);
+            mEdtName.setText("");
+            mEdtName.setEnabled(false);
+            mEdtIP.setText("");
+            mEdtIP.setEnabled(false);
+            mEdtPause.setText("");
+            mEdtPause.setEnabled(false);
+            mChkActive.setEnabled(false);
+            mChkButton.setEnabled(false);
+        } else {
+            mEdtSeqNumber.setText(mSwitchSeqNumber);
+            mEdtName.setText(mSwitchId);
+            mEdtIP.setText(mSwitchIP);
+            mEdtPause.setText(mSwitchPause);
+            mChkActive.setChecked(mSwitchActive);
+            mChkButton.setChecked(mButtonActive);
+        }
     }
 
-    private void sReadScreen(){
+    private void sReadScreen() {
         mSwitchSeqNumber = mEdtSeqNumber.getText().toString();
         mSwitchId = mEdtName.getText().toString();
         mSwitchIP = mEdtIP.getText().toString();
@@ -281,7 +356,7 @@ public class ModifySwitch extends Activity {
         mButtonActive = mChkButton.isChecked();
     }
 
-    private SwitchLocal sProcessScreen(){
+    private SwitchLocal sProcessScreen() {
         int lPause;
         int lSeqNumber;
         String lTest;
@@ -295,7 +370,7 @@ public class ModifySwitch extends Activity {
         lError = 0;
 
         lSwitch = new SwitchLocal();
-        if (mSwitchSeqNumber.trim().equals("")){
+        if (mSwitchSeqNumber.trim().equals("")) {
             Toast.makeText(this, R.string.msg_seqmandatory, Toast.LENGTH_SHORT).show();
             lNotProvided++;
             lError++;
@@ -303,23 +378,23 @@ public class ModifySwitch extends Activity {
         } else {
             try {
                 lSeqNumber = Integer.parseInt(mSwitchSeqNumber);
-            } catch (NumberFormatException pExc){
+            } catch (NumberFormatException pExc) {
                 Toast.makeText(this, R.string.msg_seqmandatory, Toast.LENGTH_SHORT).show();
                 lError++;
                 lSeqNumber = 0;
             }
         }
         lResult = lSwitch.xSeqNumber(lSeqNumber);
-        if (lResult != Switch.ResultOK){
+        if (lResult != Switch.ResultOK) {
             Toast.makeText(this, R.string.msg_seqmandatory, Toast.LENGTH_SHORT).show();
             lError++;
         }
         lResult = lSwitch.xName(mSwitchId);
-        if (lResult != Switch.ResultOK){
+        if (lResult != Switch.ResultOK) {
             Toast.makeText(this, R.string.msg_namewrong, Toast.LENGTH_SHORT).show();
             lError++;
         }
-        if (mSwitchPause.trim().equals("")){
+        if (mSwitchPause.trim().equals("")) {
             Toast.makeText(this, R.string.msg_pausemandatory, Toast.LENGTH_SHORT).show();
             lNotProvided++;
             lError++;
@@ -327,31 +402,31 @@ public class ModifySwitch extends Activity {
         } else {
             try {
                 lPause = Integer.parseInt(mSwitchPause);
-            } catch (NumberFormatException pExc){
+            } catch (NumberFormatException pExc) {
                 Toast.makeText(this, R.string.msg_pauseinteger, Toast.LENGTH_SHORT).show();
                 lError++;
                 lPause = 0;
             }
         }
         lResult = lSwitch.xPause(lPause);
-        if (lResult != Switch.ResultOK){
+        if (lResult != Switch.ResultOK) {
             Toast.makeText(this, R.string.msg_pauseinteger, Toast.LENGTH_SHORT).show();
             lError++;
         }
         lTest = mSwitchIP.trim().toUpperCase();
         lResult = lSwitch.xIP(lTest);
-        if (lResult != Switch.ResultOK){
+        if (lResult != Switch.ResultOK) {
             Toast.makeText(this, R.string.msg_iperror, Toast.LENGTH_SHORT).show();
             lError++;
         }
         lSwitch.xActive(mSwitchActive);
-        if (mSwitchActive){
-            if (lNotProvided>0){
+        if (mSwitchActive) {
+            if (lNotProvided > 0) {
                 Toast.makeText(this, R.string.msg_activeincomplete, Toast.LENGTH_SHORT).show();
                 lError++;
             }
         }
-        if (lError==0){
+        if (lError == 0) {
             lResult = lSwitch.xTestSwitch();
             switch (lResult) {
                 case Switch.ResultOK:
@@ -374,184 +449,13 @@ public class ModifySwitch extends Activity {
                     lError++;
                     break;
             }
-            if (lError>0){
+            if (lError > 0) {
                 Toast.makeText(this, lText, Toast.LENGTH_SHORT).show();
             }
         }
-        if (lError>0){
+        if (lError > 0) {
             lSwitch = null;
         }
         return lSwitch;
-    }
-
-    private static class SetSwitch extends AsyncTask<SwitchLocal, Void, RestAPI.RestResult> {
-        private final WeakReference<ModifySwitch> mRefMain;
-
-        private SetSwitch(ModifySwitch pMain){
-            mRefMain = new WeakReference<>(pMain);
-        }
-
-        @Override
-        protected RestAPI.RestResult doInBackground(SwitchLocal... pPars) {
-            ModifySwitch lMain;
-            String lRequest;
-            RestAPI.RestResult lOutput;
-            RestAPI lRestAPI;
-            SwitchLocal lSwitchLocal;
-            JSONObject lAction;
-            String lActionS;
-
-            lMain = mRefMain.get();
-            if (lMain == null){
-                return null;
-            } else {
-                if (pPars.length>0){
-                    lSwitchLocal = pPars[0];
-                    lAction = new JSONObject();
-                    try{
-                        lAction.put("action", lSwitchLocal.xAction());
-                        lAction.put("lang", Locale.getDefault().getLanguage());
-                        lAction.put("switch", lSwitchLocal.xSwitch());
-                        lActionS = lAction.toString();
-                    } catch (JSONException pExc){
-                        lActionS = "";
-                    }
-                    lRequest = lMain.mServer.xAddress() + URIs.UriServerSwitch + lSwitchLocal.xName();
-                    lRestAPI = new RestAPI();
-                    lRestAPI.xMethod(RestAPI.cMethodPut);
-                    lRestAPI.xMediaRequest(RestAPI.cMediaJSON);
-                    lRestAPI.xMediaReply(RestAPI.cMediaJSON);
-                    lRestAPI.xUrl(lRequest);
-                    lRestAPI.xAction(lActionS);
-                    lOutput = lRestAPI.xCallApi();
-                } else {
-                    lOutput = null;
-                }
-
-                return lOutput;
-            }
-        }
-
-        protected void onPostExecute(RestAPI.RestResult pOutput) {
-            ModifySwitch lMain;
-            String lResultS;
-            JSONObject lResult;
-
-            if (pOutput != null){
-                lMain = mRefMain.get();
-                if (lMain != null){
-                    switch (pOutput.xResult()) {
-                        case Result.cResultOK:
-                            lResult = pOutput.xReplyJ();
-                            lResultS = lResult.optString("descr", "JSON error");
-                            Toast.makeText(lMain.mContext, lResultS, Toast.LENGTH_SHORT).show();
-                            break;
-                        case Result.cResultConnectTimeOut:
-                            Toast.makeText(lMain.mContext, "Connect Time-Out", Toast.LENGTH_SHORT).show();
-                            break;
-                        case Result.cResultReadTimeOut:
-                            Toast.makeText(lMain.mContext, "Read Time-Out", Toast.LENGTH_SHORT).show();
-                            break;
-                        default:
-                            Toast.makeText(lMain.mContext, pOutput.xText(), Toast.LENGTH_SHORT).show();
-                            break;
-                    }
-                }
-            }
-        }
-    }
-
-    private static class GetButton extends AsyncTask<Void, Void, RestAPI.RestResult> {
-        private final WeakReference<ModifySwitch> mRefMain;
-
-        private GetButton(ModifySwitch pMain){
-            mRefMain = new WeakReference<>(pMain);
-        }
-
-        @Override
-        protected RestAPI.RestResult doInBackground(Void... params) {
-            ModifySwitch lMain;
-            String lRequest;
-            RestAPI.RestResult lOutput;
-            RestAPI lRestAPI;
-
-            lMain = mRefMain.get();
-            if (lMain == null){
-                return null;
-            } else {
-                lRequest = "http://" + lMain.mSwitch.xIP() + URIs.UriSwitch;
-                lRestAPI = new RestAPI();
-                lRestAPI.xMethod(RestAPI.cMethodGet);
-                lRestAPI.xMediaRequest(RestAPI.cMediaText);
-                lRestAPI.xMediaReply(RestAPI.cMediaJSON);
-                lRestAPI.xUrl(lRequest);
-                lRestAPI.xAction("");
-                lOutput = lRestAPI.xCallApi();
-                return lOutput;
-            }
-        }
-
-        protected void onPostExecute(RestAPI.RestResult pOutput) {
-            ModifySwitch lMain;
-
-            if (pOutput != null){
-                lMain = mRefMain.get();
-                if (lMain != null){
-                    lMain.sFillButton(pOutput.xResult(), pOutput.xText(), pOutput.xReplyJ(), false);
-                }
-            }
-        }
-    }
-
-    private static class SetButton extends AsyncTask<Void, Void, RestAPI.RestResult> {
-        private final WeakReference<ModifySwitch> mRefMain;
-
-        private SetButton(ModifySwitch pMain){
-            mRefMain = new WeakReference<>(pMain);
-        }
-
-        @Override
-        protected RestAPI.RestResult doInBackground(Void... params) {
-            ModifySwitch lMain;
-            String lRequest;
-            RestAPI.RestResult lOutput;
-            RestAPI lRestAPI;
-            JSONObject lAction;
-            String lActionS;
-
-            lMain = mRefMain.get();
-            if (lMain == null){
-                return null;
-            } else {
-                lAction = new JSONObject();
-                try {
-                    lAction.put("button", (lMain.mButtonActive) ? "on" : "off");
-                    lActionS = lAction.toString();
-                } catch (JSONException pExc){
-                    lActionS = "";
-                }
-
-                lRequest = "http://" + lMain.mSwitch.xIP() + URIs.UriSetting;
-                lRestAPI = new RestAPI();
-                lRestAPI.xMethod(RestAPI.cMethodPut);
-                lRestAPI.xMediaRequest(RestAPI.cMediaJSON);
-                lRestAPI.xMediaReply(RestAPI.cMediaJSON);
-                lRestAPI.xUrl(lRequest);
-                lRestAPI.xAction(lActionS);
-                lOutput = lRestAPI.xCallApi();
-                return lOutput;
-            }
-        }
-
-        protected void onPostExecute(RestAPI.RestResult pOutput) {
-            ModifySwitch lMain;
-
-            if (pOutput != null){
-                lMain = mRefMain.get();
-                if (lMain != null){
-                    lMain.sFillButton(pOutput.xResult(), pOutput.xText(), pOutput.xReplyJ(), true);
-                }
-            }
-        }
     }
 }

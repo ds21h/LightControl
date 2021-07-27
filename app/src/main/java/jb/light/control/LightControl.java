@@ -1,7 +1,6 @@
 package jb.light.control;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.TimePickerDialog;
 import android.content.Context;
@@ -11,14 +10,11 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
-
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-
 import android.os.Looper;
 import android.os.Message;
 import android.view.Menu;
@@ -28,24 +24,11 @@ import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.TimePicker;
 import android.net.Uri;
 import android.widget.Toast;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.lang.ref.WeakReference;
-import java.text.ParseException;
-import java.text.ParsePosition;
-import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.List;
 
 public class LightControl extends Activity {
@@ -67,8 +50,6 @@ public class LightControl extends Activity {
     private ImageButton mIbtnSelectOn;
     private ImageButton mIbtnSelectOff;
 
-    private TextView mTxtCount;
-
     private Data mData;
     private ResStatus mResStatus;
 
@@ -79,30 +60,32 @@ public class LightControl extends Activity {
     Handler mUpdateHandler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
         @Override
         public boolean handleMessage(@NonNull Message pMessage) {
-            if ((pMessage.what & ControlRunnable.cSurveyChange) != 0){
-                if (mResStatus.xSunset == null){
-                    mTxtSunset.setText("");
-                } else {
-                    mTxtSunset.setText(mResStatus.xSunset.format(cFormatTime));
+            if ((pMessage.what & HandlerCode.cControl) != 0){
+                if ((pMessage.what & HandlerCode.cSurveyChange) != 0){
+                    if (mResStatus.xSunset == null){
+                        mTxtSunset.setText("");
+                    } else {
+                        mTxtSunset.setText(mResStatus.xSunset.format(cFormatTime));
+                    }
+                    if (mResStatus.xLightOff == null){
+                        mTxtLightsOff.setText("");
+                    } else {
+                        mTxtLightsOff.setText(mResStatus.xLightOff.format(cFormatTime));
+                    }
+                    if (mResStatus.xFase == 2) {
+                        mTxtReading.setText(String.valueOf(mResStatus.xLightReading));
+                        mLbReading.setVisibility(View.VISIBLE);
+                        mTxtReading.setVisibility(View.VISIBLE);
+                    } else {
+                        mLbReading.setVisibility(View.INVISIBLE);
+                        mTxtReading.setVisibility(View.INVISIBLE);
+                        mTxtReading.setText("");
+                    }
                 }
-                if (mResStatus.xLightOff == null){
-                    mTxtLightsOff.setText("");
-                } else {
-                    mTxtLightsOff.setText(mResStatus.xLightOff.format(cFormatTime));
+                if ((pMessage.what & (HandlerCode.cSwitchChange | HandlerCode.cStatusChange)) != 0) {
+                    mListAdapter.clear();
+                    mListAdapter.addAll(mResStatus.xSwitches);
                 }
-                if (mResStatus.xFase == 2) {
-                    mTxtReading.setText(String.valueOf(mResStatus.xLightReading));
-                    mLbReading.setVisibility(View.VISIBLE);
-                    mTxtReading.setVisibility(View.VISIBLE);
-                } else {
-                    mLbReading.setVisibility(View.INVISIBLE);
-                    mTxtReading.setVisibility(View.INVISIBLE);
-                    mTxtReading.setText("");
-                }
-            }
-            if ((pMessage.what & (ControlRunnable.cSwitchChange | ControlRunnable.cStatusChange)) != 0) {
-                mListAdapter.clear();
-                mListAdapter.addAll(mResStatus.xSwitches);
             }
             return true;
         }
@@ -122,37 +105,17 @@ public class LightControl extends Activity {
         mIbtnSelectOn = findViewById(R.id.ibtnSelectOn);
         mIbtnSelectOff = findViewById(R.id.ibtnSelectOff);
 
-        mTxtLightsOff.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View pView) {
-                sSetTimeLightOff();
-            }
-        });
-        mChkAll.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                sSelectAll();
-            }
-        });
-        mIbtnSelectOn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                sSetSelect(true);
-            }
-        });
-        mIbtnSelectOff.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                sSetSelect(false);
-            }
-        });
+        mTxtLightsOff.setOnClickListener(pView -> sSetTimeLightOff());
+        mChkAll.setOnClickListener(v -> sSelectAll());
+        mIbtnSelectOn.setOnClickListener(v -> sSetSelect(true));
+        mIbtnSelectOff.setOnClickListener(v -> sSetSelect(false));
 
         mTxtSunset.setText("");
         mLbReading.setVisibility(View.INVISIBLE);
         mTxtReading.setVisibility(View.INVISIBLE);
         mTxtReading.setText("");
         mTxtLightsOff.setText("");
-        mListAdapter = new MainSwitchListAdapter(LightControl.this, R.layout.main_switch_list_item, new ArrayList<SwitchLocal>());
+        mListAdapter = new MainSwitchListAdapter(LightControl.this, R.layout.main_switch_list_item, new ArrayList<>());
         mLstSwitch.setAdapter(mListAdapter);
 
         mData = Data.getInstance(mContext);
@@ -217,7 +180,7 @@ public class LightControl extends Activity {
     @Override
     public void onStart() {
         super.onStart();
-        mControlRunnable = new ControlRunnable(mContext, mUpdateHandler, mResStatus);
+        mControlRunnable = new ControlRunnable(mUpdateHandler, mResStatus);
         LightControlApp.getInstance().xExecutor.execute(mControlRunnable);
     }
 
@@ -277,30 +240,32 @@ public class LightControl extends Activity {
         lConnect = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         if (lConnect != null) {
             lNet = lConnect.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-            lConnected = lNet.isConnected();
-            if (lConnected) {
-                lWifi = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
-                if (lWifi != null) {
-                    lInfo = lWifi.getConnectionInfo();
-                    lSSId = lInfo.getSSID();
-                    if (lSSId.startsWith("\"")) {
-                        lSSId = lSSId.substring(1, lSSId.length() - 1);
-                    }
-
-                    lServerList = mData.xServers(lSSId);
-                    if (lServerList.size() < 1) {
-                        Toast.makeText(mContext, R.string.msg_nolightserver, Toast.LENGTH_SHORT).show();
-                    } else {
-                        lServerName = lServerList.get(0).xName();
-                        if (lServerList.size() > 1) {
-                            sSelectServer(lServerList);
+            if (lNet != null){
+                lConnected = lNet.isConnected();
+                if (lConnected) {
+                    lWifi = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+                    if (lWifi != null) {
+                        lInfo = lWifi.getConnectionInfo();
+                        lSSId = lInfo.getSSID();
+                        if (lSSId.startsWith("\"")) {
+                            lSSId = lSSId.substring(1, lSSId.length() - 1);
                         }
+
+                        lServerList = mData.xServers(lSSId);
+                        if (lServerList.size() < 1) {
+                            Toast.makeText(mContext, R.string.msg_nolightserver, Toast.LENGTH_SHORT).show();
+                        } else {
+                            lServerName = lServerList.get(0).xName();
+                            if (lServerList.size() > 1) {
+                                sSelectServer(lServerList);
+                            }
+                        }
+                    } else {
+                        Toast.makeText(mContext, R.string.msg_nonetwork, Toast.LENGTH_SHORT).show();
                     }
                 } else {
                     Toast.makeText(mContext, R.string.msg_nonetwork, Toast.LENGTH_SHORT).show();
                 }
-            } else {
-                Toast.makeText(mContext, R.string.msg_nonetwork, Toast.LENGTH_SHORT).show();
             }
         } else {
             Toast.makeText(mContext, R.string.msg_nonetwork, Toast.LENGTH_SHORT).show();
@@ -414,7 +379,6 @@ public class LightControl extends Activity {
         int lCount;
         View lView;
         MainSwitchListAdapter.SwitchItemHandle lHandle;
-        Action lAction;
 
         lNumberRow = mLstSwitch.getChildCount();
         for (lCount = 0; lCount < lNumberRow; lCount++) {
@@ -441,33 +405,31 @@ public class LightControl extends Activity {
         if (mResStatus.xLightOff != null) {
             lHour = mResStatus.xLightOff.getHour();
             lMinute = mResStatus.xLightOff.getMinute();
-            TimePickerDialog lPicker = new TimePickerDialog(this, new TimePickerDialog.OnTimeSetListener() {
-                public void onTimeSet(TimePicker view, int pHour, int pMinute) {
-                    Action lAction;
-                    ZonedDateTime lLightOff;
+            TimePickerDialog lPicker = new TimePickerDialog(this, (view, pHour, pMinute) -> {
+                Action lAction;
+                ZonedDateTime lLightOff;
 
-                    lLightOff = ZonedDateTime.from(mResStatus.xLightOff);
-                    if (lHour != pHour){
-                        lLightOff = lLightOff.withHour(pHour);
-                    }
-                    if (lMinute != pMinute){
-                        lLightOff = lLightOff.withMinute(pMinute);
-                    }
-                    if (lHour < 10){
-                        if (pHour >= 10){
-                            lLightOff = lLightOff.minusDays(1);
-                        }
-                    } else {
-                        if (pHour < 10){
-                            lLightOff = lLightOff.plusDays(1);
-                        }
-                    }
-
-                    lAction = new Action(Action.ActionLightsOff);
-                    lAction.xValue = lLightOff.format(DateTimeFormatter.ISO_ZONED_DATE_TIME);
-                    lAction.xIP = mResStatus.xServer.xAddress();
-                    LightControlApp.getInstance().xExecutor.execute(new ServerActionRunnable(lAction));
+                lLightOff = ZonedDateTime.from(mResStatus.xLightOff);
+                if (lHour != pHour){
+                    lLightOff = lLightOff.withHour(pHour);
                 }
+                if (lMinute != pMinute){
+                    lLightOff = lLightOff.withMinute(pMinute);
+                }
+                if (lHour < 10){
+                    if (pHour >= 10){
+                        lLightOff = lLightOff.minusDays(1);
+                    }
+                } else {
+                    if (pHour < 10){
+                        lLightOff = lLightOff.plusDays(1);
+                    }
+                }
+
+                lAction = new Action(Action.ActionLightsOff);
+                lAction.xValue = lLightOff.format(DateTimeFormatter.ISO_ZONED_DATE_TIME);
+                lAction.xIP = mResStatus.xServer.xAddress();
+                LightControlApp.getInstance().xExecutor.execute(new ServerActionRunnable(lAction));
             }, lHour, lMinute, true);
             lPicker.show();
         }

@@ -42,7 +42,7 @@ Version 3.1.2 - 08-10-2020
     -   usesCleartextTraffic added in manifest
     -   permission changed from CoarseLocation to FineLocation
 
-Version 3.2 - 29-06-2021
+Version 3.2 - 27-07-2021
     -   Deleted support of obsolete attributes:
         Switch: Type, Group and Point
         Setting: MaxSensor

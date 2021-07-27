@@ -3,10 +3,8 @@ package jb.light.control;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
-
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -16,9 +14,6 @@ import android.widget.EditText;
 import android.widget.Toast;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.lang.ref.WeakReference;
-import java.util.Locale;
 
 public class ModifySensor extends Activity {
     private final Context mContext = this;
@@ -46,14 +41,19 @@ public class ModifySensor extends Activity {
     Handler mUpdateHandler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
         @Override
         public boolean handleMessage(@NonNull Message pMessage) {
-            if ((pMessage.what & PutSettingRunnable.cSettingProcessedOK) != 0){
-                mTreshold = mSetting.xSensorLimit();
-                mInterval = mSetting.xPeriodSec();
-                mRepeat = mSetting.xPeriodDark();
-                sFillScreen();
-                Toast.makeText(mContext, getString(R.string.msg_update_OK), Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(mContext, getString(R.string.msg_update_NOK), Toast.LENGTH_SHORT).show();
+            String lErrMsg;
+
+            if ((pMessage.what & HandlerCode.cPutServerSetting) != 0){
+                lErrMsg = HandlerCode.xCheckCode(mContext, pMessage.what);
+                if (lErrMsg == null){
+                    mTreshold = mSetting.xSensorLimit();
+                    mInterval = mSetting.xPeriodSec();
+                    mRepeat = mSetting.xPeriodDark();
+                    sFillScreen();
+                    Toast.makeText(mContext, getString(R.string.msg_update_OK), Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(mContext, lErrMsg, Toast.LENGTH_SHORT).show();
+                }
             }
             return true;
         }
@@ -85,7 +85,7 @@ public class ModifySensor extends Activity {
                 try{
                     lSetting = new JSONObject(lBundle.getString(cSetting));
                     mSetting = new Setting(lSetting);
-                } catch (JSONException pExc){
+                } catch (Exception pExc){
                     mSetting = new Setting();
                 }
             }
@@ -96,7 +96,7 @@ public class ModifySensor extends Activity {
             try{
                 lSetting = new JSONObject(savedInstanceState.getString(cSetting));
                 mSetting = new Setting(lSetting);
-            } catch (JSONException pExc){
+            } catch (Exception pExc){
                 mSetting = new Setting();
             }
             mServerName = savedInstanceState.getString(cServerName);
@@ -140,7 +140,7 @@ public class ModifySensor extends Activity {
             mTreshold = Integer.parseInt(mEdtTreshold.getText().toString());
             mInterval = Integer.parseInt(mEdtInterval.getText().toString());
             mRepeat = Integer.parseInt(mEdtRepeat.getText().toString());
-        } catch (NumberFormatException pExc){
+        } catch (NumberFormatException ignored){
         }
     }
 

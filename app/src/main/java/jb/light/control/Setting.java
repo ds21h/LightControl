@@ -3,7 +3,7 @@ package jb.light.control;
 /*
  * Synchronise with class Setting in LightSupport
  *
- * Version 20210614-01
+ * Version 20210726
  *
  */
 import org.json.JSONException;

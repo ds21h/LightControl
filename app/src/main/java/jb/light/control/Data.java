@@ -398,41 +398,6 @@ class Data extends SQLiteOpenHelper {
         return lSwitch;
     }
 
-    boolean xSaveSwitches(List<SwitchLocal> pSwitches, String pServerName){
-        List<SwitchLocal> lSwitches;
-        int lCountOld;
-        int lCountNew;
-        Switch lSwitchOld;
-        Switch lSwitchNew;
-        boolean lEqual;
-
-        lSwitches = xSwitches(pServerName);
-        if (lSwitches.size() == pSwitches.size()){
-            lEqual = true;
-            for (lCountNew = 0; lCountNew < pSwitches.size(); lCountNew++){
-                lSwitchNew = pSwitches.get(lCountNew);
-                lEqual = false;
-                for (lCountOld = 0; lCountOld < lSwitches.size(); lCountOld++){
-                    lSwitchOld = lSwitches.get(lCountOld);
-                    if (lSwitchOld.xIsEqual(lSwitchNew)){
-                        lEqual = true;
-                        break;
-                    }
-                }
-                if (!lEqual){
-                    break;
-                }
-            }
-        } else {
-            lEqual = false;
-        }
-
-        if (!lEqual){
-            xReplaceSwitches(pSwitches, pServerName);
-        }
-        return !lEqual;
-    }
-
     int xReplaceSwitches(List<SwitchLocal> pSwitches, String pServer){
         SQLiteDatabase lDB;
         String lSelection;
@@ -445,7 +410,6 @@ class Data extends SQLiteOpenHelper {
 
         lResult = Result.cResultOK;
         lDB = this.getWritableDatabase();
-        lDB.enableWriteAheadLogging();
         lDB.beginTransaction();
 
         lSelection = "Server = ?";
@@ -468,6 +432,7 @@ class Data extends SQLiteOpenHelper {
                 break;
             }
         }
+        lDB.setTransactionSuccessful();
         lDB.endTransaction();
         lDB.close();
 

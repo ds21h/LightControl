@@ -5,25 +5,17 @@ import android.app.Activity;
 import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
-
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.TimePicker;
 import android.widget.Toast;
-import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.lang.ref.WeakReference;
-import java.util.Locale;
 
 public class ModifyLightOff extends Activity {
     private final Context mContext = this;
@@ -50,14 +42,19 @@ public class ModifyLightOff extends Activity {
     Handler mUpdateHandler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
         @Override
         public boolean handleMessage(@NonNull Message pMessage) {
-            if ((pMessage.what & PutSettingRunnable.cSettingProcessedOK) != 0){
-                mHour = mSetting.xLightOffHour();
-                mMinute = mSetting.xLightOffMin();
-                mPeriod = mSetting.xLightOffPeriod();
-                sFillScreen();
-                Toast.makeText(mContext, getString(R.string.msg_update_OK), Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(mContext, getString(R.string.msg_update_NOK), Toast.LENGTH_SHORT).show();
+            String lErrMsg;
+
+            if ((pMessage.what & HandlerCode.cPutServerSetting) != 0) {
+                lErrMsg = HandlerCode.xCheckCode(mContext, pMessage.what);
+                if (lErrMsg == null) {
+                    mHour = mSetting.xLightOffHour();
+                    mMinute = mSetting.xLightOffMin();
+                    mPeriod = mSetting.xLightOffPeriod();
+                    sFillScreen();
+                    Toast.makeText(mContext, getString(R.string.msg_update_OK), Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(mContext, lErrMsg, Toast.LENGTH_SHORT).show();
+                }
             }
             return true;
         }
@@ -75,12 +72,7 @@ public class ModifyLightOff extends Activity {
         mTxtLightOff = findViewById(R.id.txtLightOff);
         mEdtPeriod = findViewById(R.id.edtPeriod);
 
-        mTxtLightOff.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                sSetTimeLightOff();
-            }
-        });
+        mTxtLightOff.setOnClickListener(v -> sSetTimeLightOff());
 
         mData = Data.getInstance(mContext);
 
@@ -95,7 +87,7 @@ public class ModifyLightOff extends Activity {
                 try{
                     lSetting = new JSONObject(lBundle.getString(cSetting));
                     mSetting = new Setting(lSetting);
-                } catch (JSONException pExc){
+                } catch (Exception pExc){
                     mSetting = new Setting();
                 }
             }
@@ -107,7 +99,7 @@ public class ModifyLightOff extends Activity {
             try{
                 lSetting = new JSONObject(savedInstanceState.getString(cSetting));
                 mSetting = new Setting(lSetting);
-            } catch (JSONException pExc){
+            } catch (Exception pExc){
                 mSetting = new Setting();
             }
             mServerName = savedInstanceState.getString(cServerName);
@@ -149,7 +141,7 @@ public class ModifyLightOff extends Activity {
     private  void sReadScreen(){
         try {
             mPeriod = Integer.parseInt(mEdtPeriod.getText().toString());
-        } catch (NumberFormatException pExc){
+        } catch (NumberFormatException ignored){
         }
     }
 
@@ -180,12 +172,10 @@ public class ModifyLightOff extends Activity {
     }
 
     private void sSetTimeLightOff(){
-        TimePickerDialog lPicker = new TimePickerDialog(this, new TimePickerDialog.OnTimeSetListener() {
-            public void onTimeSet(TimePicker view, int pHour, int pMinute) {
-                mHour = pHour;
-                mMinute = pMinute;
-                sFillScreen();
-            }
+        TimePickerDialog lPicker = new TimePickerDialog(this, (view, pHour, pMinute) -> {
+            mHour = pHour;
+            mMinute = pMinute;
+            sFillScreen();
         }, mHour, mMinute, true);
         lPicker.show();
     }

@@ -1,5 +1,6 @@
 package jb.light.control;
 
+import android.annotation.SuppressLint;
 import android.os.Handler;
 
 import org.json.JSONException;
@@ -8,9 +9,6 @@ import org.json.JSONObject;
 import java.util.Locale;
 
 public class PutSettingRunnable implements Runnable {
-    static final int cSettingProcessed = 1;
-    static final int cSettingProcessedOK = 2;
-
     static final int cSaveLocation = 1;
     static final int cSaveLightOff = 2;
     static final int cSaveSensor = 4;
@@ -27,6 +25,7 @@ public class PutSettingRunnable implements Runnable {
         mAction = pAction;
     }
 
+    @SuppressLint("DefaultLocale")
     @Override
     public void run() {
         String lRequest;
@@ -37,12 +36,14 @@ public class PutSettingRunnable implements Runnable {
         JSONObject lSetting;
         JSONObject lLightOff;
         JSONObject lSensor;
-        String lActionS;
+        String lActionS = "";
         int lResult;
+        boolean lRequestOK;
 
-        lResult = cSettingProcessed;
+        lResult = HandlerCode.cPutServerSetting;
         if (mAction != 0){
             lAction = new JSONObject();
+            lRequestOK = true;
             if ((mAction & cSaveLocation) != 0){
                 lLocation = new JSONObject();
                 try {
@@ -50,6 +51,7 @@ public class PutSettingRunnable implements Runnable {
                     lLocation.put(Setting.cLattitude, String.valueOf(mSetting.xLattitude()));
                     lAction.put(Setting.cLocation, lLocation);
                 } catch (JSONException pExc) {
+                    lRequestOK = false;
                 }
             }
             if ((mAction & cSaveLightOff) != 0){
@@ -59,6 +61,7 @@ public class PutSettingRunnable implements Runnable {
                     lLightOff.put(Setting.cPeriod, String.valueOf(mSetting.xLightOffPeriod()));
                     lAction.put(Setting.cLightOff, lLightOff);
                 } catch (JSONException pExc){
+                    lRequestOK = false;
                 }
             }
             if ((mAction & cSaveSensor) != 0){
@@ -69,16 +72,18 @@ public class PutSettingRunnable implements Runnable {
                     lSensor.put(Setting.cRepeat, String.valueOf(mSetting.xPeriodDark()));
                     lAction.put(Setting.cSensor, lSensor);
                 } catch (JSONException pExc){
+                    lRequestOK = false;
                 }
             }
             try {
                 lAction.put("lang", Locale.getDefault().getLanguage());
                 lActionS = lAction.toString();
             } catch (JSONException pExc) {
-                lActionS = "";
+                lRequestOK = false;
             }
 
-            if (!lActionS.equals("")){
+            if (lRequestOK){
+                lResult |= HandlerCode.cRequestOK;
                 lRequest = mServerAddress + URIs.UriServerSetting;
                 lRestAPI = new RestAPI();
                 lRestAPI.xMethod(RestAPI.cMethodPut);
@@ -88,10 +93,11 @@ public class PutSettingRunnable implements Runnable {
                 lRestAPI.xAction(lActionS);
                 lOutput = lRestAPI.xCallApi();
                 if (lOutput.xResult() == Result.cResultOK) {
+                    lResult |= HandlerCode.cCommunicationOK;
                     lSetting = lOutput.xReplyJ().optJSONObject("setting");
                     if (lSetting != null){
                         mSetting.xSetting(lSetting);
-                        lResult |= cSettingProcessedOK;
+                        lResult |= HandlerCode.cProcessOK;
                     }
                 }
             }

@@ -1,8 +1,5 @@
 package jb.light.control;
 
-import android.os.Parcel;
-import android.os.Parcelable;
-
 /**
  * Created by Jan on 18-9-2015.
  */

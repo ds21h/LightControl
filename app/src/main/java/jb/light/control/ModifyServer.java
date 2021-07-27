@@ -10,13 +10,14 @@ import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import androidx.annotation.NonNull;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
 
 /**
  * Created by Jan on 21-10-2015.
@@ -139,11 +140,7 @@ public class ModifyServer extends Activity implements YesNoDialog.YesNoDialogLis
         MenuItem lItem;
 
         lItem = pMenu.findItem(R.id.action_delete);
-        if (mAction.equals(Intent.ACTION_INSERT)){
-            lItem.setVisible(false);
-        } else {
-            lItem.setVisible(true);
-        }
+        lItem.setVisible(!mAction.equals(Intent.ACTION_INSERT));
         return true;
     }
 
@@ -268,7 +265,7 @@ public class ModifyServer extends Activity implements YesNoDialog.YesNoDialogLis
         NetworkInfo lNet;
         WifiManager lWifi;
         WifiInfo lInfo;
-        String lSSId = "";
+        String lSSId;
         boolean lConnected;
 
         lConnect = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -276,21 +273,23 @@ public class ModifyServer extends Activity implements YesNoDialog.YesNoDialogLis
             Toast.makeText(this, R.string.msg_nonetwork, Toast.LENGTH_SHORT).show();
         } else {
             lNet = lConnect.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-            lConnected = lNet.isConnected();
-            if (lConnected) {
-                lWifi =  (WifiManager)getApplicationContext().getSystemService(WIFI_SERVICE);
-                if (lWifi == null){
-                    Toast.makeText(this, R.string.msg_nonetwork, Toast.LENGTH_SHORT).show();
-                } else {
-                    lInfo = lWifi.getConnectionInfo();
-                    lSSId = lInfo.getSSID();
-                    if (lSSId.startsWith("\"")) {
-                        lSSId = lSSId.substring(1, lSSId.length() - 1);
+            if (lNet != null){
+                lConnected = lNet.isConnected();
+                if (lConnected) {
+                    lWifi =  (WifiManager)getApplicationContext().getSystemService(WIFI_SERVICE);
+                    if (lWifi == null){
+                        Toast.makeText(this, R.string.msg_nonetwork, Toast.LENGTH_SHORT).show();
+                    } else {
+                        lInfo = lWifi.getConnectionInfo();
+                        lSSId = lInfo.getSSID();
+                        if (lSSId.startsWith("\"")) {
+                            lSSId = lSSId.substring(1, lSSId.length() - 1);
+                        }
+                        mEdtNetwork.setText(lSSId);
                     }
-                    mEdtNetwork.setText(lSSId);
+                } else {
+                    Toast.makeText(this, R.string.msg_nonetwork, Toast.LENGTH_SHORT).show();
                 }
-            } else {
-                Toast.makeText(this, R.string.msg_nonetwork, Toast.LENGTH_SHORT).show();
             }
         }
     }

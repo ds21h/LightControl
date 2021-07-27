@@ -10,25 +10,31 @@ import org.json.JSONObject;
 class SwitchLocal extends Switch {
     public static final String cAction = "action";
 
-    static final String ActionNone = "none";
-    static final String ActionNew = "new";
-    static final String ActionModify = "modify";
-    static final String ActionDelete = "delete";
-    static final String ActionOn = "switchon";
-    static final String ActionOff = "switchoff";
+    static final int ActionNone = 0;
+    static final int ActionNew = 1;
+    static final int ActionModify = 2;
+    static final int ActionDelete = 3;
+    static final int ActionOn = 4;
+    static final int ActionOff = 5;
+    static final int ActionButtonOn = 6;
+    static final int ActionButtonOff = 7;
 
     static final int StatusOff = 0;
     static final int StatusOn = 1;
     static final int StatusNone = 9;
 
-    private String mAction;
+    private final String[] cActionText = {"none", "new", "modify", "delete", "on", "off", "buttonon", "buttonoff"};
+
+    private int mAction;
     private int mStatus;
+    private boolean mButton;
     private boolean mChanged;
 
     SwitchLocal(int pSeqNumber, String pName, boolean pActive, int pPause, String pIP) {
         super(pSeqNumber, pName, pActive, pPause, pIP);
         mAction = ActionNone;
         mStatus = StatusNone;
+        mButton = false;
         mChanged = false;
     }
 
@@ -36,6 +42,7 @@ class SwitchLocal extends Switch {
         super(pSwitch);
         mAction = ActionNone;
         mStatus = StatusNone;
+        mButton = false;
         mChanged = false;
     }
 
@@ -43,6 +50,7 @@ class SwitchLocal extends Switch {
         super();
         mAction = ActionNone;
         mStatus = StatusNone;
+        mButton = false;
         mChanged = false;
     }
 
@@ -51,6 +59,7 @@ class SwitchLocal extends Switch {
         xName(pName);
         mAction = ActionNone;
         mStatus = StatusNone;
+        mButton = false;
         mChanged = false;
     }
 
@@ -58,14 +67,23 @@ class SwitchLocal extends Switch {
         super(pSwitch.xSeqNumber(), pSwitch.xName(), pSwitch.xActive(), pSwitch.xPause(), pSwitch.xIP());
         mAction = pSwitch.mAction;
         mStatus = pSwitch.mStatus;
+        mButton = pSwitch.mButton;
         mChanged = false;
     }
 
-    String xAction() {
+    int xAction() {
         return mAction;
     }
 
-    void xAction(String pAction) {
+    String xActionText(){
+        if (mAction < 0 || mAction >= cActionText.length){
+            return "";
+        } else {
+            return cActionText[mAction];
+        }
+    }
+
+    void xAction(int pAction) {
         mAction = pAction;
     }
 
@@ -78,6 +96,14 @@ class SwitchLocal extends Switch {
             mStatus = pStatus;
             mChanged = true;
         }
+    }
+
+    boolean xButton(){
+        return mButton;
+    }
+
+    void xButton(boolean pButton){
+        mButton = pButton;
     }
 
     void xChangeInit() {

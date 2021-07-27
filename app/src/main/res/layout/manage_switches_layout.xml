@@ -16,8 +16,6 @@
         android:layout_height="wrap_content"
         android:id="@+id/ibtnNew"
         android:src="@mipmap/lamp_plus"
-        android:layout_gravity="right"
-        android:onClick="sNewSwitch"
-        android:nestedScrollingEnabled="false" />
+        android:layout_gravity="right" />
 
 </LinearLayout>

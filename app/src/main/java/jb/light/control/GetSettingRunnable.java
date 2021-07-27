@@ -3,8 +3,6 @@ package jb.light.control;
 import android.os.Handler;
 
 public class GetSettingRunnable implements Runnable {
-    public static final int cSettingRetrieved = 1;
-
     private final Handler mHandler;
     private final Setting mSetting;
     String mServerAddress;
@@ -20,7 +18,9 @@ public class GetSettingRunnable implements Runnable {
         String lRequest;
         RestAPI.RestResult lOutput;
         RestAPI lRestAPI;
+        int lResult;
 
+        lResult = HandlerCode.cGetServerSetting;
         lRequest = mServerAddress + URIs.UriServerSetting;
         lRestAPI = new RestAPI();
         lRestAPI.xMethod(RestAPI.cMethodGet);
@@ -28,10 +28,13 @@ public class GetSettingRunnable implements Runnable {
         lRestAPI.xMediaReply(RestAPI.cMediaJSON);
         lRestAPI.xUrl(lRequest);
         lRestAPI.xAction("");
+        lResult |= HandlerCode.cRequestOK;
         lOutput = lRestAPI.xCallApi();
         if (lOutput.xResult() == Result.cResultOK) {
+            lResult |= HandlerCode.cCommunicationOK;
+            lResult |= HandlerCode.cProcessOK;
             mSetting.xSetting(lOutput.xReplyJ());
         }
-        mHandler.sendEmptyMessage(cSettingRetrieved);
+        mHandler.sendEmptyMessage(lResult);
     }
 }
